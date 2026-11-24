@@ -19,6 +19,7 @@ generated:
 dependencies:
   forge:
     repository: brainboxemb/lib.py.solidcraft.forge
+    release: v0.14.0
     version: 0.14.0
     commit: cd46d6797df319b9d13605c11568990113772700
   solidcraft:
@@ -68,6 +69,7 @@ snapshots:
             project = load_project(repo)
             models = discover_models(repo, project)
             self.assertEqual(project.build_branch, "build")
+            self.assertEqual(project.forge.release, "v0.14.0")
             self.assertEqual(len(models), 1)
             self.assertEqual(models[0].id, "box")
             self.assertEqual(models[0].variants[0].id, "box")
