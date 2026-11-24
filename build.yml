@@ -1,8 +1,10 @@
 schema: 1
-branch: dev
+branch: issue/17-dispatch-target-ci
 
-modules: all
-models: all
+modules:
+  - merge-policy
+
+models: []
 
 tasks:
   - test

@@ -1,4 +1,4 @@
-"""Load stable project config and branch-local build selection."""
+"""Load stable project config and optional branch-local work selection."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import yaml
 
 
 class ConfigError(ValueError):
-    """Repository configuration is missing, stale or invalid."""
+    """Repository configuration is missing or invalid."""
 
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -44,6 +44,15 @@ class BuildSelection:
     modules: tuple[str, ...] | None
     models: tuple[str, ...] | None
     tasks: tuple[str, ...]
+
+
+def full_selection(branch: str) -> BuildSelection:
+    return BuildSelection(
+        branch=branch,
+        modules=None,
+        models=None,
+        tasks=("test", "build"),
+    )
 
 
 def _mapping(path: Path) -> dict[str, Any]:
@@ -117,16 +126,19 @@ def load_project(repo: Path) -> ProjectConfig:
     )
 
 
-def load_build(repo: Path, branch: str) -> BuildSelection:
+def load_build(repo: Path, branch: str) -> BuildSelection | None:
     path = repo / "build.yml"
+    if not path.is_file():
+        return None
+
     data = _mapping(path)
     if data.get("schema") != 1:
         raise ConfigError(f"unsupported schema: {path}")
+
     configured_branch = data.get("branch")
     if configured_branch != branch:
-        raise ConfigError(
-            f"stale build.yml: configured {configured_branch!r}, current {branch!r}"
-        )
+        return None
+
     tasks = data.get("tasks")
     if (
         not isinstance(tasks, list)
@@ -137,6 +149,7 @@ def load_build(repo: Path, branch: str) -> BuildSelection:
     unsupported = sorted(set(tasks) - {"test", "build"})
     if unsupported:
         raise ConfigError(f"unsupported task(s): {', '.join(unsupported)}")
+
     return BuildSelection(
         branch=branch,
         modules=_ids(data.get("modules"), "modules", path),
@@ -150,6 +163,7 @@ def current_branch(repo: Path) -> str:
         value = os.environ.get(key, "").strip()
         if value:
             return value
+
     result = subprocess.run(
         ["git", "-C", str(repo), "branch", "--show-current"],
         check=True,

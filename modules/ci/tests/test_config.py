@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from cad_model_ci.config import ConfigError, current_branch, load_build, load_project
+from cad_model_ci.config import current_branch, load_build, load_project
 
 
 class ConfigTests(unittest.TestCase):
@@ -27,19 +27,29 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(config.modules_root, Path("modules"))
             self.assertEqual(config.output_root, Path("build"))
 
-    def test_work_branch_requires_matching_build_yml(self):
+    def test_matching_build_yml_is_used(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             (repo / "build.yml").write_text(
                 "schema: 1\nbranch: issue/1-a\nmodules: [ci]\nmodels: []\ntasks: [test]\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ConfigError, "stale build.yml"):
-                load_build(repo, "issue/2-b")
+            selection = load_build(repo, "issue/1-a")
+            self.assertEqual(selection.modules, ("ci",))
+            self.assertEqual(selection.tasks, ("test",))
 
-    @patch.dict(os.environ, {"GITHUB_HEAD_REF": "issue/10-work"}, clear=False)
+    def test_mismatched_build_yml_is_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "build.yml").write_text(
+                "schema: 1\nbranch: issue/1-a\nmodules: [ci]\nmodels: []\ntasks: [test]\n",
+                encoding="utf-8",
+            )
+            self.assertIsNone(load_build(repo, "dev"))
+
+    @patch.dict(os.environ, {"GITHUB_HEAD_REF": "issue/15-work"}, clear=False)
     def test_github_head_ref_is_the_work_branch(self):
-        self.assertEqual(current_branch(Path(".")), "issue/10-work")
+        self.assertEqual(current_branch(Path(".")), "issue/15-work")
 
 
 if __name__ == "__main__":

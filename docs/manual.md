@@ -2,18 +2,18 @@
 
 ## Stable configuration
 
-Root `ci.yml` defines permanent branches, the exact Forge pin and roots for
-modules, models and generated output.
+Root `ci.yml` defines permanent branches, exact Forge pin and repository
+roots.
 
-## Working selection
+## CI modes
 
-Every non-main work branch updates root `build.yml`.
+### Work branch / PR
 
-Example CI-module-only PR:
+A matching root `build.yml` controls exactly what runs:
 
 ```yaml
 schema: 1
-branch: issue/12-ci-change
+branch: issue/15-ci-change
 
 modules:
   - ci
@@ -23,69 +23,60 @@ tasks:
   - build
 ```
 
-Example model-only PR:
+If the branch field does not match the actual work branch, the file is ignored
+and CI falls back to full.
+
+### dev
+
+`build.yml` is ignored.
+
+CI finds the most recent successful push/workflow_dispatch run on `dev` and
+uses its SHA as the baseline. The current `dev` SHA is the target.
+
+```text
+git diff --name-only <successful-baseline> <current-dev>
+```
+
+Only changed items plus declared impact run.
+
+Because superseded runs are cancelled, an unfinished run never becomes the
+baseline. A later dev run therefore automatically catches all changes since
+the last successful one.
+
+### main
+
+`build.yml` is ignored and the complete repository runs.
+
+## Item impact
+
+Item-local `ci.yml` may declare:
 
 ```yaml
-schema: 1
-branch: issue/13-simple-box
-
-modules: []
-models:
-  - simple-box
-tasks:
-  - build
+impact: self
 ```
 
-Use `all` for either item class when required.
+or:
 
-If the branch value is stale, CI fails.
-
-On `main`, `build.yml` is ignored and all configured items run.
-
-## Python module shape
-
-```text
-modules/<id>/
-  ci.yml
-  pyproject.toml
-  src/
-  tests/
+```yaml
+impact: models
 ```
 
-A module PR keeps its tests inside the module and selects that module in
-`build.yml`.
+or:
 
-## Model shape
-
-```text
-models/<id>/
-  ci.yml
-  model.yml
-  <engine source>
+```yaml
+impact: full
 ```
 
-Model-specific verification stays with the model.
+Items can add extra watched paths:
+
+```yaml
+watch:
+  - .github/workflows/ci.yml
+```
+
+Model ids are discovered from model roots; they are never centrally listed in
+Python.
 
 ## Output
 
-Generated artifacts are written below root `build/`.
-
-## Workflows
-
-CI workflow:
-
-```text
-checkout
-  -> bootstrap modules/ci
-  -> python -m cad_model_ci
-```
-
-Merge workflow:
-
-```text
-checkout
-  -> bootstrap modules/merge-policy
-  -> python -m cad_model_merge_policy
-```
-
-Forge pins and model names do not belong in workflow YAML.
+Generated artifacts remain below root `build/`.

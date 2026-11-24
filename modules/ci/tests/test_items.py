@@ -17,13 +17,15 @@ class ItemTests(unittest.TestCase):
             output_root=Path("build"),
         )
 
-    def test_discovers_module_and_model_roots_independently(self):
+    def test_discovers_item_local_impact_and_watch(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             module = repo / "modules" / "ci"
             module.mkdir(parents=True)
             (module / "ci.yml").write_text(
-                "schema: 1\nid: ci\nkind: python\n", encoding="utf-8"
+                "schema: 1\nid: ci\nkind: python\nimpact: full\n"
+                "watch: [.github/workflows/ci.yml]\n",
+                encoding="utf-8",
             )
             model = repo / "models" / "box"
             (model / "scpf").mkdir(parents=True)
@@ -32,8 +34,12 @@ class ItemTests(unittest.TestCase):
                 "schema: 1\nid: box\nbuilder: forge\nsource: scpf/model.py\n",
                 encoding="utf-8",
             )
-            self.assertEqual([x.id for x in discover_modules(repo, self.project())], ["ci"])
-            self.assertEqual([x.id for x in discover_models(repo, self.project())], ["box"])
+            modules = discover_modules(repo, self.project())
+            models = discover_models(repo, self.project())
+            self.assertEqual(modules[0].impact, "full")
+            self.assertIn("modules/ci/**", modules[0].watch)
+            self.assertIn(".github/workflows/ci.yml", modules[0].watch)
+            self.assertIn("models/box/**", models[0].watch)
 
     def test_selection_returns_only_requested_item(self):
         items = (type("Item", (), {"id": "one"})(), type("Item", (), {"id": "two"})())

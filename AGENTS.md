@@ -33,28 +33,48 @@ Temporary branches use only configured prefixes from root `ci.yml`.
 After a successful same-repository short-lived PR is merged into `dev`, its
 source branch is removed by `modules/branch-cleanup`.
 
-A standalone cleanup sweep may remove old temporary branches only when there is
-no open PR and a merged PR proves integration into `dev`.
-
 `main` and `dev` are never cleanup candidates.
 
-## ci.yml and build.yml
+## CI selection modes
 
-Root `ci.yml` is stable repository configuration. It owns:
+CI has three modes.
 
-- permanent branch names and temporary branch prefixes;
-- exact Forge repository/version/commit;
-- module root;
-- model root;
-- generated output root.
+### Work branch / PR
 
-Root `build.yml` is branch-specific execution selection.
+If `build.yml.branch` matches the actual branch, use its explicit
+module/model/task selection.
 
-On a non-main branch it must contain the exact current branch name, selected
-modules/models and tasks. A mismatch is stale and CI fails.
+If it does not match, ignore `build.yml` and run full. A stale build file is
+not a CI failure.
 
-On `main`, `build.yml` is ignored and the complete repository is
-tested/built.
+### dev
+
+Ignore `build.yml`.
+
+Use the last successful dev **push/workflow_dispatch** CI SHA as baseline and
+the current dev SHA as target. Build/test the changed items in that Git range,
+plus item-declared impact.
+
+A cancelled dev run never advances the successful baseline. If two squash
+merges arrive quickly, the newer run therefore includes changes not completed
+by the cancelled run.
+
+If no safe successful baseline exists, run full.
+
+### main
+
+Ignore `build.yml` and run full.
+
+## Item impact
+
+Impact is declared by the item that owns it, not by a central model catalog.
+
+- `modules/ci`: `impact: full`;
+- `modules/build`: `impact: models`;
+- other modules default to self;
+- models default to self.
+
+An item may add extra watched paths, for example its thin workflow YAML.
 
 ## Python modules
 
@@ -68,22 +88,12 @@ modules/<id>/
   tests/
 ```
 
-Tests for a Python capability live under that module. Root-level Python tests
-are not allowed.
-
-Current modules:
-
-- `modules/ci` — configuration, selection and orchestration;
-- `modules/build` — model build execution;
-- `modules/merge-policy` — branch integration/merge method;
-- `modules/branch-cleanup` — safe temporary branch cleanup.
-
-A PR changing one module selects only that module in `build.yml`.
+Tests for a capability live under that module. Root-level Python tests are not
+allowed.
 
 ## Models
 
-Every CAD model is a standalone item under `models/<id>/` with its own config,
-metadata, engine source and model-owned verification when needed.
+Every CAD model is a standalone item under `models/<id>/`.
 
 Do not create a central model catalog in Python.
 
@@ -91,14 +101,8 @@ Do not create a central model catalog in Python.
 
 Workflow YAML stays thin and bootstraps only its owning module.
 
-- CI workflow -> `modules/ci`;
-- merge workflow -> `modules/merge-policy`;
-- branch cleanup workflow -> `modules/branch-cleanup`.
-
-## build.yml merge ownership
-
-`build.yml` is branch-local state. Target-branch preservation during
-integration belongs to `modules/merge-policy`, not CI, build or cleanup.
+The CI workflow uses concurrency with cancellation so a newer run supersedes an
+older run for the same Git ref.
 
 ## External ownership
 
