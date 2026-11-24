@@ -1,5 +1,5 @@
 schema: 1
-branch: fix/62-verify-fixture
+branch: fix/catalog-category-rendering
 
 modules:
   - pages
