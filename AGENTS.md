@@ -39,6 +39,9 @@ source branch is removed by `modules/branch-cleanup`.
 
 `main` and `dev` are never cleanup candidates.
 
+The generated `build` branch is not a source branch. It stores durable technical
+output for the permanent source scopes and is also never a cleanup candidate.
+
 ## CI selection modes
 
 CI has three modes.
@@ -68,6 +71,26 @@ If no safe successful baseline exists, run full.
 ### main
 
 Ignore `build.yml` and run full.
+
+## Durable build output
+
+Successful permanent-branch model builds publish to the generated branch
+configured by `ci.yml.generated.build_branch`.
+
+The generated branch contains complete durable source scopes:
+
+```text
+dev/
+  build-plan.json
+  models/
+main/
+  build-plan.json
+  models/
+```
+
+PR/work-branch output is verification-only and is never published. Incremental
+`dev` publication replaces only rebuilt model directories and preserves other
+active model output. `main` is full and replaces its complete scope.
 
 ## Item impact
 
