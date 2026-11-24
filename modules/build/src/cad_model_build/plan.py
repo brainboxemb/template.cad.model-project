@@ -42,8 +42,11 @@ def resolve_plan(
 
     built_source_sha = source_sha(repo)
     rows = []
-    for owner_id in sorted(selected_ids):
-        model = by_id[owner_id]
+    selected = sorted(
+        (by_id[owner_id] for owner_id in selected_ids),
+        key=lambda model: (model.priority, model.id),
+    )
+    for model in selected:
         relative_root = model.root.relative_to(repo).as_posix()
         for variant in sorted(model.variants, key=lambda item: item.id):
             target = f"models/{variant.id}"
@@ -51,6 +54,7 @@ def resolve_plan(
                 {
                     "id": variant.id,
                     "owner": model.id,
+                    "priority": model.priority,
                     "built_source_sha": built_source_sha,
                     "root": relative_root,
                     "source": (model.root / variant.source).relative_to(repo).as_posix(),
