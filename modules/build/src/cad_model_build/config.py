@@ -55,6 +55,7 @@ class ModelConfig:
     variants: tuple[ModelVariant, ...]
     artifacts: tuple[str, ...]
     snapshots: tuple[SnapshotSpec, ...]
+    snapshot_camera: dict[str, object] | None = None
     priority: int = _DEFAULT_MODEL_PRIORITY
 
 
@@ -108,6 +109,20 @@ def _camera(value: object, field: str, path: Path) -> dict[str, object] | None:
         if item is not None and type(item) not in (int, float):
             raise BuildConfigError(f"{field}.{key} must be numeric: {path}")
     return dict(value)
+
+
+def _primary_snapshot_camera(
+    data: dict[str, Any],
+    path: Path,
+) -> dict[str, object] | None:
+    raw = data.get("snapshot")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or set(raw) != {"camera"}:
+        raise BuildConfigError(
+            f"snapshot must contain only camera: {path}"
+        )
+    return _camera(raw.get("camera"), "snapshot.camera", path)
 
 
 def _snapshots(data: dict[str, Any], path: Path) -> tuple[SnapshotSpec, ...]:
@@ -376,6 +391,7 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ..
                 variants=variants,
                 artifacts=tuple(artifacts),
                 snapshots=_snapshots(data, path),
+                snapshot_camera=_primary_snapshot_camera(data, path),
                 priority=_resolved_priority(
                     model_root=model_root,
                     models_root=root,

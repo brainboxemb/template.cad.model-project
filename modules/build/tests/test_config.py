@@ -54,6 +54,9 @@ id: box
 builder: forge
 source: scpf/model.py
 artifacts: [stl]
+snapshot:
+  camera:
+    yaw: -0.4
 snapshots:
   - name: top.png
     camera:
@@ -70,6 +73,7 @@ snapshots:
             self.assertEqual(models[0].variants[0].id, "box")
             self.assertEqual(models[0].variants[0].source, Path("scpf/model.py"))
             self.assertEqual(models[0].artifacts, ("stl",))
+            self.assertEqual(models[0].snapshot_camera, {"yaw": -0.4})
             self.assertEqual(models[0].snapshots[0].name, "top.png")
 
     def test_multi_variant_owner_expands_sources(self):

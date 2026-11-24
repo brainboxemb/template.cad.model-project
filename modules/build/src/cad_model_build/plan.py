@@ -59,6 +59,9 @@ def resolve_plan(
                     "root": relative_root,
                     "source": (model.root / variant.source).relative_to(repo).as_posix(),
                     "commands": f"{target}/solidcraft.json",
+                    "snapshot": {
+                        "camera": model.snapshot_camera,
+                    },
                     "native": {
                         "sc": f"{target}/model.sc",
                         "step": f"{target}/model.step",

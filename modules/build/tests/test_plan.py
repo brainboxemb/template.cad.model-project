@@ -40,6 +40,7 @@ class BuildPlanTests(unittest.TestCase):
                 variants=(ModelVariant("box", Path("scpf/model.py")),),
                 artifacts=("stl",),
                 snapshots=(SnapshotSpec("top.png", {"pitch": -1.55}),),
+                snapshot_camera={"yaw": -0.4},
             )
             plan = resolve_plan(
                 repo=repo,
@@ -52,6 +53,7 @@ class BuildPlanTests(unittest.TestCase):
             self.assertEqual(row["id"], "box")
             self.assertEqual(row["owner"], "box")
             self.assertEqual(row["commands"], "models/box/solidcraft.json")
+            self.assertEqual(row["snapshot"]["camera"], {"yaw": -0.4})
             self.assertEqual(row["native"]["stl"], "models/box/model.stl")
             self.assertEqual(row["snapshots"][0]["path"], "models/box/top.png")
 
