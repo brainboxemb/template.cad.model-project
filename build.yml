@@ -1,8 +1,8 @@
 schema: 1
-branch: fix/pages-pr-build-scope
+branch: feature/primary-snapshot-camera
 
 modules:
-  - pages
+  - build
 models: []
 
 tasks:
