@@ -4,31 +4,31 @@ This file contains unfinished work only.
 
 ## Now
 
-### #11 — independent branch cleanup
+### #15 — incremental dev CI
 
-Add `modules/branch-cleanup` as a standalone Python item.
+Implement three CI selection modes:
 
-Acceptance:
+- work branch/PR: matching `build.yml`;
+- dev: changed paths since the last successful dev integration build;
+- main: full.
 
-1. module owns its config, package and tests;
-2. same-repository merged temporary branch -> dev is removable;
-3. main/dev are never removable;
-4. manual sweep requires no open PR plus merged-PR proof;
-5. workflow bootstraps only the cleanup module;
-6. current stale bootstrap branches are removed after acceptance.
+Requirements:
 
-### merge-policy build.yml preservation
+1. stale build.yml is ignored, not failed;
+2. dev baseline comes only from successful push/workflow_dispatch CI;
+3. cancelled dev runs do not advance that baseline;
+4. unsafe/missing baseline falls back to full;
+5. changed-item impact is item-local;
+6. CI concurrency cancels superseded runs.
 
-Update `modules/merge-policy` in its own PR so integration preserves the
-target branch's own `build.yml`. Do not solve this in CI or cleanup.
+## Accepted
 
-## Accepted direction
-
-Python capabilities and CAD models are independent build items. Non-main
-branches use `build.yml` to select exactly what is tested/built; main ignores
-it and runs the complete repository.
+- independent Python module roots;
+- branch-local work selection;
+- standalone branch cleanup;
+- only main/dev remain as permanent branches.
 
 ## Later
 
-After module boundaries, cleanup and branch-local build selection are proven,
-migrate one real CAD project before adding site/release/gallery scope.
+After incremental dev selection is proven live, migrate one real CAD project
+before expanding site/release/gallery scope.
