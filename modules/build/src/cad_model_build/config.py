@@ -1,0 +1,254 @@
+"""Load root toolchain pins and model-local build configuration."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import re
+from typing import Any
+
+import yaml
+
+
+class BuildConfigError(ValueError):
+    """Build configuration is missing or invalid."""
+
+
+_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_COMMIT = re.compile(r"^[0-9a-f]{40}$")
+_PNG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.png$")
+_SUPPORTED_ARTIFACTS = frozenset({"stl"})
+_CAMERA_KEYS = frozenset({"target", "yaw", "pitch", "distance", "fov"})
+
+
+@dataclass(frozen=True)
+class ForgePin:
+    repository: str
+    version: str
+    commit: str
+
+
+@dataclass(frozen=True)
+class SolidCraftPin:
+    image: str
+    version: str
+
+
+@dataclass(frozen=True)
+class SnapshotSpec:
+    name: str
+    camera: dict[str, object] | None = None
+
+
+@dataclass(frozen=True)
+class SnapshotConfig:
+    camera: dict[str, object] | None = None
+    extra: tuple[SnapshotSpec, ...] = ()
+
+
+@dataclass(frozen=True)
+class ModelConfig:
+    id: str
+    root: Path
+    source: Path
+    artifacts: tuple[str, ...]
+    snapshot: SnapshotConfig
+
+
+@dataclass(frozen=True)
+class ProjectConfig:
+    stable_branch: str
+    development_branch: str
+    forge: ForgePin
+    solidcraft: SolidCraftPin
+    models_root: Path
+    output_root: Path
+
+
+def _mapping(path: Path) -> dict[str, Any]:
+    try:
+        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise BuildConfigError(f"missing config: {path}") from exc
+    except yaml.YAMLError as exc:
+        raise BuildConfigError(f"invalid YAML: {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise BuildConfigError(f"config must be a mapping: {path}")
+    return value
+
+
+def _relative(value: object, field: str, path: Path) -> Path:
+    if not isinstance(value, str) or not value:
+        raise BuildConfigError(f"{field} must be a non-empty string: {path}")
+    result = Path(value)
+    if result.is_absolute() or ".." in result.parts:
+        raise BuildConfigError(f"{field} must remain inside the repository: {path}")
+    return result
+
+
+def _camera(value: object, field: str, path: Path) -> dict[str, object] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) - _CAMERA_KEYS:
+        raise BuildConfigError(f"{field} has invalid camera fields: {path}")
+    target = value.get("target")
+    if target is not None:
+        if (
+            not isinstance(target, list)
+            or len(target) != 3
+            or any(type(item) not in (int, float) for item in target)
+        ):
+            raise BuildConfigError(f"{field}.target must contain three numbers: {path}")
+    for key in ("yaw", "pitch", "distance", "fov"):
+        item = value.get(key)
+        if item is not None and type(item) not in (int, float):
+            raise BuildConfigError(f"{field}.{key} must be numeric: {path}")
+    return dict(value)
+
+
+def _snapshot(data: dict[str, Any], path: Path) -> SnapshotConfig:
+    raw = data.get("snapshot")
+    if raw is None:
+        return SnapshotConfig()
+    if not isinstance(raw, dict) or set(raw) - {"camera", "extra"}:
+        raise BuildConfigError(f"snapshot has invalid fields: {path}")
+    camera = _camera(raw.get("camera"), "snapshot.camera", path)
+    extra_raw = raw.get("extra", [])
+    if not isinstance(extra_raw, list):
+        raise BuildConfigError(f"snapshot.extra must be a list: {path}")
+    result: list[SnapshotSpec] = []
+    names: set[str] = set()
+    for index, item in enumerate(extra_raw):
+        if not isinstance(item, dict) or set(item) - {"name", "camera"}:
+            raise BuildConfigError(f"snapshot.extra[{index}] is invalid: {path}")
+        name = item.get("name")
+        if not isinstance(name, str) or not _PNG.fullmatch(name):
+            raise BuildConfigError(f"invalid extra snapshot name {name!r}: {path}")
+        if name == "model.png" or name in names:
+            raise BuildConfigError(f"duplicate/reserved snapshot name {name!r}: {path}")
+        names.add(name)
+        result.append(
+            SnapshotSpec(
+                name=name,
+                camera=_camera(
+                    item.get("camera"),
+                    f"snapshot.extra[{index}].camera",
+                    path,
+                ),
+            )
+        )
+    return SnapshotConfig(camera=camera, extra=tuple(result))
+
+
+def load_project(repo: Path) -> ProjectConfig:
+    path = repo / "ci.yml"
+    data = _mapping(path)
+    if data.get("schema") != 1:
+        raise BuildConfigError(f"unsupported schema: {path}")
+
+    branches = data.get("branches")
+    dependencies = data.get("dependencies")
+    roots = data.get("roots")
+    if not all(isinstance(value, dict) for value in (branches, dependencies, roots)):
+        raise BuildConfigError(
+            f"branches, dependencies and roots must be mappings: {path}"
+        )
+
+    stable = branches.get("stable")
+    development = branches.get("development")
+    if not isinstance(stable, str) or not isinstance(development, str):
+        raise BuildConfigError(f"branch names must be strings: {path}")
+
+    forge = dependencies.get("forge")
+    solidcraft = dependencies.get("solidcraft")
+    if not isinstance(forge, dict) or not isinstance(solidcraft, dict):
+        raise BuildConfigError(
+            f"dependencies.forge and dependencies.solidcraft are required: {path}"
+        )
+
+    repository = forge.get("repository")
+    version = forge.get("version")
+    commit = forge.get("commit")
+    if not isinstance(repository, str) or not _REPOSITORY.fullmatch(repository):
+        raise BuildConfigError(f"invalid Forge repository: {path}")
+    if not isinstance(version, str) or not version:
+        raise BuildConfigError(f"invalid Forge version: {path}")
+    if not isinstance(commit, str) or not _COMMIT.fullmatch(commit):
+        raise BuildConfigError(f"Forge commit must be an exact SHA: {path}")
+
+    image = solidcraft.get("image")
+    solidcraft_version = solidcraft.get("version")
+    if (
+        not isinstance(image, str)
+        or not image.startswith("ghcr.io/brainboxemb/cad-solidcraft:v")
+    ):
+        raise BuildConfigError(f"released SolidCraft runtime image required: {path}")
+    if not isinstance(solidcraft_version, str) or not solidcraft_version:
+        raise BuildConfigError(f"invalid SolidCraft version: {path}")
+
+    return ProjectConfig(
+        stable_branch=stable,
+        development_branch=development,
+        forge=ForgePin(repository, version, commit),
+        solidcraft=SolidCraftPin(image, solidcraft_version),
+        models_root=_relative(roots.get("models"), "roots.models", path),
+        output_root=_relative(roots.get("output"), "roots.output", path),
+    )
+
+
+def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ...]:
+    root = repo / project.models_root
+    result: list[ModelConfig] = []
+    seen: set[str] = set()
+
+    for path in sorted(root.rglob("ci.yml")):
+        data = _mapping(path)
+        if data.get("schema") != 1:
+            raise BuildConfigError(f"unsupported model schema: {path}")
+        process = data.get("process", True)
+        if type(process) is not bool:
+            raise BuildConfigError(f"process must be boolean: {path}")
+        if not process:
+            continue
+
+        model_id = data.get("id")
+        if not isinstance(model_id, str) or not _ID.fullmatch(model_id):
+            raise BuildConfigError(f"invalid model id: {path}")
+        if model_id in seen:
+            raise BuildConfigError(f"duplicate model id {model_id!r}: {path}")
+        seen.add(model_id)
+
+        if data.get("builder") != "forge":
+            raise BuildConfigError(f"model builder must be forge: {path}")
+        source = _relative(data.get("source"), "source", path)
+        model_root = path.parent
+        if not (model_root / source).is_file():
+            raise BuildConfigError(f"model source does not exist: {model_root / source}")
+
+        artifacts = data.get("artifacts", [])
+        if artifacts is None:
+            artifacts = []
+        if (
+            not isinstance(artifacts, list)
+            or any(not isinstance(item, str) or not item for item in artifacts)
+            or len(set(artifacts)) != len(artifacts)
+        ):
+            raise BuildConfigError(f"artifacts must be a unique string list: {path}")
+        unsupported = sorted(set(artifacts) - _SUPPORTED_ARTIFACTS)
+        if unsupported:
+            raise BuildConfigError(
+                f"unsupported artifact(s) {', '.join(unsupported)}: {path}"
+            )
+
+        result.append(
+            ModelConfig(
+                id=model_id,
+                root=model_root,
+                source=source,
+                artifacts=tuple(artifacts),
+                snapshot=_snapshot(data, path),
+            )
+        )
+
+    return tuple(result)

@@ -13,8 +13,11 @@ branches:
 dependencies:
   forge:
     repository: brainboxemb/lib.py.solidcraft.forge
-    version: 0.13.2
-    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
+    version: 0.14.0
+    commit: cd46d6797df319b9d13605c11568990113772700
+  solidcraft:
+    image: ghcr.io/brainboxemb/cad-solidcraft:v0.3.5
+    version: 0.48.1
 
 roots:
   modules: modules

@@ -93,12 +93,22 @@ def discover_modules(repo: Path, project: ProjectConfig) -> tuple[PythonModule, 
 def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
     root = repo / project.models_root
     result: list[CadModel] = []
-    for child in sorted(root.iterdir(), key=lambda value: value.name):
-        path = child / "ci.yml"
-        if not child.is_dir() or not path.is_file():
-            continue
+    seen: set[str] = set()
+
+    for path in sorted(root.rglob("ci.yml")):
+        child = path.parent
         data = _load(path)
+        process = data.get("process", True)
+        if type(process) is not bool:
+            raise ConfigError(f"model process must be boolean: {path}")
+        if not process:
+            continue
+
         model_id = _id(data, path)
+        if model_id in seen:
+            raise ConfigError(f"duplicate model id {model_id!r}: {path}")
+        seen.add(model_id)
+
         builder = data.get("builder")
         source = data.get("source")
         if builder != "forge":
@@ -110,6 +120,7 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
             raise ConfigError(f"model source must remain inside model root: {path}")
         if not (child / source_path).is_file():
             raise ConfigError(f"model source does not exist: {child / source_path}")
+
         relative = child.relative_to(repo).as_posix()
         result.append(
             CadModel(

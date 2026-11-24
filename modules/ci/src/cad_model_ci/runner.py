@@ -1,4 +1,4 @@
-"""Execute the selected module tests/builds and CAD model builds."""
+"""Execute the selected module tests/builds and CAD model batch."""
 
 from __future__ import annotations
 
@@ -53,33 +53,25 @@ def build_module(module: PythonModule, output_root: Path) -> None:
 def build_models(
     *,
     repo: Path,
-    project: ProjectConfig,
     build_module_root: Path,
+    namespace: str,
     models: tuple[CadModel, ...],
 ) -> None:
     if not models:
         return
     install_module(PythonModule("build", build_module_root))
+    command = [
+        sys.executable,
+        "-m",
+        "cad_model_build",
+        "--repo",
+        str(repo),
+        "--namespace",
+        namespace,
+    ]
     for model in models:
-        _run(
-            [
-                sys.executable,
-                "-m",
-                "cad_model_build",
-                "--forge-repository",
-                project.forge.repository,
-                "--forge-version",
-                project.forge.version,
-                "--forge-commit",
-                project.forge.commit,
-                "--model-id",
-                model.id,
-                "--source",
-                str(model.root / model.source),
-                "--output-root",
-                str(repo / project.output_root),
-            ]
-        )
+        command.extend(["--model", model.id])
+    _run(command)
 
 
 def execute(
@@ -87,10 +79,11 @@ def execute(
     repo: Path,
     project: ProjectConfig,
     selection: BuildSelection,
+    namespace: str,
     modules: tuple[PythonModule, ...],
     models: tuple[CadModel, ...],
 ) -> None:
-    output_root = repo / project.output_root
+    output_root = repo / project.output_root / namespace
     if "test" in selection.tasks:
         for module in modules:
             test_module(module)
@@ -99,7 +92,7 @@ def execute(
             build_module(module, output_root)
         build_models(
             repo=repo,
-            project=project,
             build_module_root=repo / project.modules_root / "build",
+            namespace=namespace,
             models=models,
         )

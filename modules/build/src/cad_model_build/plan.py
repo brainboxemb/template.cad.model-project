@@ -1,0 +1,99 @@
+"""Resolve selected model ids into one deterministic build plan."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import subprocess
+
+from .config import BuildConfigError, ModelConfig, ProjectConfig
+
+
+def source_sha(repo: Path) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def resolve_plan(
+    *,
+    repo: Path,
+    project: ProjectConfig,
+    models: tuple[ModelConfig, ...],
+    selected_ids: tuple[str, ...],
+    namespace: str,
+) -> dict:
+    if namespace not in {project.development_branch, project.stable_branch}:
+        raise BuildConfigError(
+            f"output namespace must be {project.development_branch!r} "
+            f"or {project.stable_branch!r}"
+        )
+    if len(set(selected_ids)) != len(selected_ids):
+        raise BuildConfigError("selected model ids must be unique")
+
+    by_id = {model.id: model for model in models}
+    missing = [model_id for model_id in selected_ids if model_id not in by_id]
+    if missing:
+        raise BuildConfigError(f"unknown selected model(s): {', '.join(missing)}")
+
+    rows = []
+    for model_id in sorted(selected_ids):
+        model = by_id[model_id]
+        relative_root = model.root.relative_to(repo).as_posix()
+        target = f"models/{model.id}"
+        rows.append(
+            {
+                "id": model.id,
+                "root": relative_root,
+                "source": (model.root / model.source).relative_to(repo).as_posix(),
+                "commands": f"{target}/solidcraft.json",
+                "native": {
+                    "sc": f"{target}/model.sc",
+                    "step": f"{target}/model.step",
+                    "png": f"{target}/model.png",
+                    "stl": f"{target}/model.stl"
+                    if "stl" in model.artifacts
+                    else None,
+                    "extra_png": [
+                        {
+                            "name": item.name,
+                            "path": f"{target}/{item.name}",
+                            "camera": item.camera,
+                        }
+                        for item in model.snapshot.extra
+                    ],
+                },
+                "snapshot_camera": model.snapshot.camera,
+                "artifacts": list(model.artifacts),
+            }
+        )
+
+    return {
+        "schema": 1,
+        "namespace": namespace,
+        "source_sha": source_sha(repo),
+        "forge": {
+            "repository": project.forge.repository,
+            "version": project.forge.version,
+            "commit": project.forge.commit,
+        },
+        "solidcraft": {
+            "image": project.solidcraft.image,
+            "version": project.solidcraft.version,
+        },
+        "models": rows,
+    }
+
+
+def write_plan(output_root: Path, plan: dict) -> Path:
+    output_root.mkdir(parents=True, exist_ok=True)
+    path = output_root / "build-plan.json"
+    path.write_text(
+        json.dumps(plan, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path

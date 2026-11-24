@@ -1,8 +1,11 @@
 schema: 1
-branch: docs/29-main-dev-sync-policy
+branch: issue/36-batch-builder
 
-modules: []
-models: []
+modules:
+  - ci
+  - build
+models:
+  - simple-box
 
 tasks:
   - test
