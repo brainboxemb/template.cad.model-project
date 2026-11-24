@@ -18,13 +18,14 @@ Core rules:
 - internal Python capabilities live under modules/<id>/ and execute from src/;
 - CAD models are physical owner roots discovered from model-local ci.yml;
 - one owner may expand into multiple build variants;
-- generated CAD output is durable on build/{dev,main};
+- generated CAD output is stored on build/{dev,main};
 - model.png is implicit; STL and additional snapshots are opt-in model config;
 - site/model presentation uses shared Hugo/Hextra layouts;
 - model.yml owns presentation metadata, ci.yml owns build/source identity;
 - optional page.md and extra_views extend a model page without custom
   model-name branches;
-- stable Pages publish from main + accepted build/main through GitHub Pages Actions;
+- Pages runs separately from CAD CI and does not block the normal build;
+- one Pages deployment publishes main at `/` and dev at `/dev/`;
 - repository Pages source must be configured as GitHub Actions;
 - model-group priority/dependency work is tracked separately after the first
   live model page.
