@@ -1,9 +1,12 @@
 schema: 1
-branch: docs/mandatory-local-merge
+branch: feature/forge-v0.15.0
 
 modules:
-  - merge-policy
-models: []
+  - ci
+  - build
+models:
+  - simple-box
 
 tasks:
   - test
+  - build
