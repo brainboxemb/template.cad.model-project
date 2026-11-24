@@ -29,7 +29,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn('workflows: ["CI"]', text)
         self.assertIn("github.event.workflow_run.conclusion == 'success'", text)
         self.assertIn("peaceiris/actions-hugo@v3", text)
-        self.assertIn("actions/deploy-pages@v4", text)
+        self.assertIn("actions/deploy-pages@v5", text)
 
     def test_workflow_actions_use_readable_release_tags(self):
         for path in Path(".github/workflows").glob("*.yml"):
