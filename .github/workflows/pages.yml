@@ -14,10 +14,6 @@ on:
       - "models/**/*.jpg"
       - "models/**/*.jpeg"
       - "models/**/*.webp"
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [dev, main]
   workflow_dispatch:
 
 concurrency:
@@ -75,10 +71,7 @@ jobs:
 
   assemble:
     name: pages-build
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -155,10 +148,7 @@ jobs:
 
   deploy:
     name: pages-deploy
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'workflow_dispatch'
     needs: assemble
     runs-on: ubuntu-latest
     permissions:

@@ -1,12 +1,10 @@
 schema: 1
-branch: issue/47-model-group-priority
+branch: fix/48-dispatch-pages-after-build
 
 modules:
   - ci
-  - build
-models:
-  - simple-box
+  - pages
+models: []
 
 tasks:
   - test
-  - build

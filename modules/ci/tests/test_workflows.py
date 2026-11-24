@@ -24,12 +24,15 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertNotIn("actions-hugo", text)
         self.assertNotIn("deploy-pages", text)
 
-    def test_pages_are_a_separate_workflow(self):
-        text = Path(".github/workflows/pages.yml").read_text(encoding="utf-8")
-        self.assertIn('workflows: ["CI"]', text)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'", text)
-        self.assertIn("peaceiris/actions-hugo@v3", text)
-        self.assertIn("actions/deploy-pages@v5", text)
+    def test_pages_are_dispatched_after_build_without_blocking_ci(self):
+        ci = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+        pages = Path(".github/workflows/pages.yml").read_text(encoding="utf-8")
+        self.assertIn("actions: write", ci)
+        self.assertIn("gh workflow run pages.yml --ref main", ci)
+        self.assertIn("workflow_dispatch:", pages)
+        self.assertNotIn("workflow_run:", pages)
+        self.assertIn("peaceiris/actions-hugo@v3", pages)
+        self.assertIn("actions/deploy-pages@v5", pages)
 
     def test_workflow_actions_use_readable_release_tags(self):
         for path in Path(".github/workflows").glob("*.yml"):

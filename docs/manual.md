@@ -251,10 +251,14 @@ The primary model layout is shared. Model-specific additions use optional
 reference/build images. Do not add model-name branches to shared Hugo
 templates.
 
-Pages runs in a separate workflow from CAD CI. A successful `main` or `dev`
-CI run triggers one Pages assembly that rebuilds both the stable root and
-`/dev/`, then uploads and deploys them atomically. CAD CI therefore does not
-wait for Hugo or Pages deployment.
+Pages runs in a separate workflow from CAD CI. After a successful permanent
+build publishes its build scope, CI sends a `workflow_dispatch` for
+`pages.yml` and then finishes. The Pages workflow independently rebuilds both
+the stable root and `/dev/`, then uploads and deploys them atomically.
+
+The explicit dispatch is intentional: GitHub suppresses most chained workflow
+events created by `GITHUB_TOKEN`, while `workflow_dispatch` is allowed. CAD
+CI never waits for Hugo or Pages deployment.
 
 PRs that change site-related files get a separate read-only Pages check.
 
