@@ -22,6 +22,9 @@ Repository rules:
 - every models/<id>/ root is independent;
 - repository Python, when necessary, must be split into small independently
   tested modules rather than one central scripts/CI layer;
+- GitHub Actions is orchestration-only and must never install/run Forge or
+  contain model build logic;
+- Forge version/commit belongs in root ci.yml;
 - generic Forge/CAD-CI behavior must be fixed in its owner repository, not
   copied locally.
 
