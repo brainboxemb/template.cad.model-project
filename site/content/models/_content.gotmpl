@@ -18,7 +18,7 @@ Generic model page adapter.
 {{ end }}
 
 {{ range $modelResource := resources.Match "cad-source/**/model.yml" }}
-  {{ $modelRootPath := path.Dir $modelResource.Name }}
+  {{ $modelRootPath := strings.TrimPrefix "/" (path.Dir $modelResource.Name) }}
   {{ $modelRoot := strings.TrimPrefix "cad-source/" $modelRootPath }}
   {{ $rootMeta := $modelResource | transform.Unmarshal }}
   {{ $ciResource := resources.Get (printf "cad-source/%s/ci.yml" $modelRoot) }}
