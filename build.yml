@@ -1,8 +1,11 @@
 schema: 1
-branch: issue/26-final-acceptance
+branch: issue/28-ci-check-gate
 
-modules: []
+modules:
+  - merge-policy
+
 models: []
 
 tasks:
   - test
+  - build

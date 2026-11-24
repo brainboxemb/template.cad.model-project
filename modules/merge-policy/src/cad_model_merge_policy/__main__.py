@@ -10,7 +10,7 @@ from urllib import error, request
 from .policy import MergePolicyError, merge_method
 
 
-_ALLOWED_CHECK_RESULTS = {"success", "neutral", "skipped"}
+_ALLOWED_CI_RESULTS = {"success", "neutral", "skipped"}
 
 
 def api(repository: str, path: str, token: str, *, method: str = "GET", body=None):
@@ -35,21 +35,41 @@ def api(repository: str, path: str, token: str, *, method: str = "GET", body=Non
         raise MergePolicyError(f"GitHub API {exc.code}: {detail}") from exc
 
 
-def require_green_checks(repository: str, sha: str, token: str) -> None:
+def require_green_ci(
+    repository: str,
+    sha: str,
+    pull_request_number: int,
+    token: str,
+) -> None:
     checks = api(repository, f"commits/{sha}/check-runs", token).get("check_runs", [])
-    if not checks:
-        raise MergePolicyError("pull request head has no check runs")
-    pending = [check["name"] for check in checks if check.get("status") != "completed"]
-    failed = [
-        check["name"]
+    ci_checks = [
+        check
         for check in checks
-        if check.get("status") == "completed"
-        and check.get("conclusion") not in _ALLOWED_CHECK_RESULTS
+        if check.get("name") == "ci"
+        and any(
+            pr.get("number") == pull_request_number
+            for pr in check.get("pull_requests", [])
+        )
+    ]
+
+    if not ci_checks:
+        raise MergePolicyError("pull request has no central ci check")
+
+    pending = [
+        check
+        for check in ci_checks
+        if check.get("status") != "completed"
     ]
     if pending:
-        raise MergePolicyError(f"checks still running: {', '.join(pending)}")
+        raise MergePolicyError("central ci check is still running")
+
+    failed = [
+        check
+        for check in ci_checks
+        if check.get("conclusion") not in _ALLOWED_CI_RESULTS
+    ]
     if failed:
-        raise MergePolicyError(f"checks not green: {', '.join(failed)}")
+        raise MergePolicyError("central ci check is not green")
 
 
 def dispatch_workflow(repository: str, workflow: str, ref: str, token: str) -> None:
@@ -80,7 +100,12 @@ def main() -> None:
     base = pr["base"]["ref"]
     method = merge_method(head=pr["head"]["ref"], base=base)
     head_sha = pr["head"]["sha"]
-    require_green_checks(args.repository, head_sha, token)
+    require_green_ci(
+        args.repository,
+        head_sha,
+        args.pull_request_number,
+        token,
+    )
 
     result = api(
         args.repository,
