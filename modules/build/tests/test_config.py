@@ -159,6 +159,72 @@ variants:
             with self.assertRaisesRegex(BuildConfigError, "duplicate build variant id"):
                 discover_models(repo, load_project(repo))
 
+
+    def test_nearest_group_priority_is_inherited(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            (repo / "models").mkdir()
+            (repo / "models/ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: 100\n",
+                encoding="utf-8",
+            )
+            components = repo / "models/components"
+            components.mkdir()
+            (components / "ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: 20\n",
+                encoding="utf-8",
+            )
+            model = components / "box"
+            write_source(model, "scpf/model.py")
+            (model / "ci.yml").write_text(
+                "schema: 1\nid: box\nbuilder: forge\nsource: scpf/model.py\n",
+                encoding="utf-8",
+            )
+
+            models = discover_models(repo, load_project(repo))
+
+            self.assertEqual(len(models), 1)
+            self.assertEqual(models[0].priority, 20)
+
+    def test_group_config_is_not_a_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            group = repo / "models/components"
+            group.mkdir(parents=True)
+            (group / "ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: 20\n",
+                encoding="utf-8",
+            )
+            model = group / "box"
+            write_source(model, "scpf/model.py")
+            (model / "ci.yml").write_text(
+                "schema: 1\nid: box\nbuilder: forge\nsource: scpf/model.py\n",
+                encoding="utf-8",
+            )
+
+            models = discover_models(repo, load_project(repo))
+
+            self.assertEqual([model.id for model in models], ["box"])
+
+    def test_invalid_group_priority_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            group = repo / "models/components"
+            group.mkdir(parents=True)
+            (group / "ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: -1\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                BuildConfigError,
+                "group priority must be a non-negative integer",
+            ):
+                discover_models(repo, load_project(repo))
+
     def test_snapshots_are_optional(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
