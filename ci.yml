@@ -1,0 +1,7 @@
+schema: 1
+
+# Stable repository CI configuration.
+# build.yml is deliberately separate and is never a CI input.
+
+items:
+  - models/*
