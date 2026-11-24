@@ -4,26 +4,32 @@ This file contains unfinished work only.
 
 ## Now
 
-### #22 — dispatch branch cleanup after local merge
+### #28 — central CI merge gate
 
-Local merge-policy already dispatches target CI after a successful merge.
+The local merge-policy must qualify only the PR-specific central `ci` check.
 
-Also dispatch the independent branch-cleanup workflow on the same target ref,
-because GITHUB_TOKEN merges do not reliably emit pull_request: closed events.
+Do not let merge-policy, branch cleanup or unrelated check-runs on the same SHA
+block the merge gate.
 
-Cleanup ownership remains entirely in modules/branch-cleanup.
+Acceptance:
 
-## Accepted
+1. green PR-specific ci allows merge;
+2. pending ci blocks;
+3. failed ci blocks;
+4. missing PR-specific ci blocks;
+5. unrelated merge/cleanup checks are ignored.
 
-- work branches use matching build.yml;
-- dev uses changes since the last successful integration baseline;
-- main runs full;
-- superseded CI runs are cancelled;
-- item impact is local to each item;
-- local merge-policy dispatches target CI;
-- branch cleanup is a separate module.
+## Accepted architecture
+
+- work branch selection from matching build.yml;
+- incremental dev CI from the last successful integration baseline;
+- full main CI;
+- cancel-in-progress;
+- item-local impact/watch metadata;
+- local merge-policy dispatches target CI and branch cleanup;
+- standalone cleanup removes merged temporary branches.
 
 ## Next
 
-After the automatic cleanup dispatch is live-proven, migrate one real CAD
-project before adding site/release/gallery scope.
+After #28 is live-proven on main -> dev synchronization, migrate one real CAD
+project before expanding site/release/gallery scope.
