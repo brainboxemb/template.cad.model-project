@@ -28,14 +28,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install local project tooling
-        run: python -m pip install -e .
+      - name: Bootstrap merge-policy module
+        run: python -m pip install -e modules/merge-policy
 
       - name: Execute repository merge policy
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          python -m cad_project.merge_policy
+          python -m cad_model_merge_policy
           --repository "${{ github.repository }}"
           --pull-request-number "${{ github.event.issue.number }}"
           --actor "${{ github.actor }}"

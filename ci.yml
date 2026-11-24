@@ -1,13 +1,16 @@
 schema: 1
 
+branches:
+  stable: main
+  development: dev
+
 dependencies:
   forge:
     repository: brainboxemb/lib.py.solidcraft.forge
     version: 0.13.2
     commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
 
-models:
-  root: models
-
-output:
-  root: build
+roots:
+  modules: modules
+  models: models
+  output: build

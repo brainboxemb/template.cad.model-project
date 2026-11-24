@@ -4,38 +4,30 @@ This file contains unfinished work only.
 
 ## Now
 
-### #7 — self-contained local CI modules
+### #10 — independent Python module roots
 
-Replace the rejected inline model-building workflow with the intended local
-architecture:
-
-- workflow YAML is thin;
-- root `ci.yml` owns the exact Forge pin and project roots;
-- root `build.yml` owns current branch/model/task selection for humans/agents;
-- CI never reads `build.yml`;
-- small `cad_project.*` modules own configuration, model discovery, Forge
-  execution, CI, working builds and merge policy;
-- each module has focused tests;
-- no shared CAD-CI or shared merge workflow is used.
+Perform the one-time migration from root `cad_project/` + root `tests/` to
+independent module items under `modules/`.
 
 Acceptance:
 
-1. unit tests for the local modules are green;
-2. CI builds `models/simple-box` from `ci.yml`;
-3. generated result is below `build/models/simple-box/`;
-4. changing/adding a model does not require a central model catalog;
-5. a working build rejects stale `build.yml.branch`;
-6. feature -> dev is squash;
-7. dev -> main and main -> dev are merge commits.
+1. `modules/ci`, `modules/build` and `modules/merge-policy` each own
+   `ci.yml`, package source and tests;
+2. root Python package/tests are removed;
+3. branch `build.yml` selects modules/models/tasks;
+4. CI tests/builds only selected items on non-main branches;
+5. main ignores `build.yml` and runs everything;
+6. simple-box still builds through `modules/build`;
+7. workflows only bootstrap their owning local module.
+
+### merge-policy build.yml preservation
+
+After the module layout is accepted, update `modules/merge-policy` in its own
+PR so branch integration preserves the target branch's own `build.yml`.
+
+That module owns the rule; do not add exceptions in `modules/ci`.
 
 ## Later
 
-Use the accepted template to migrate one real CAD project before adding site,
-release, gallery or additional engine features.
-
-## Repository setting still required
-
-GitHub branch/ruleset protection should require pull requests for `main` and
-`dev` so direct pushes/manual merges cannot bypass the local merge policy.
-
-The connected GitHub app cannot configure administration-level protection.
+After module boundaries and branch-local build selection are proven, migrate
+one real CAD project to this template before adding site/release/gallery scope.

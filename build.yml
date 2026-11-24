@@ -1,9 +1,14 @@
 schema: 1
+branch: issue/10-verify-local-merge
 
-branch: fix/7-remove-local-ci
+modules:
+  - ci
+  - build
+  - merge-policy
 
 models:
   - simple-box
 
 tasks:
+  - test
   - build
