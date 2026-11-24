@@ -212,7 +212,7 @@ The site consumes source and generated evidence without rebuilding CAD:
 main source
   model.yml + ci.yml + optional page.md/assets
                     \
-                     -> Hugo -> gh-pages
+                     -> Hugo -> GitHub Pages artifact
                     /
 build/main
   build-plan.json + model artifacts
@@ -226,6 +226,9 @@ The primary model layout is shared. Model-specific additions use optional
 reference/build images. Do not add model-name branches to shared Hugo
 templates.
 
-PRs build Pages read-only against accepted stable build evidence. Only a
-successful permanent `main` run publishes the complete generated site to
-`ci.yml.generated.pages_branch`.
+PRs build Pages read-only against accepted stable build evidence. On a
+successful permanent `main` run, the verified Hugo output is uploaded with
+GitHub's Pages artifact action and deployed by a separate `deploy-pages` job.
+
+Repository **Settings -> Pages -> Build and deployment -> Source** must be set
+to **GitHub Actions**. No `gh-pages` source branch is required for deployment.

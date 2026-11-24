@@ -80,6 +80,8 @@ jobs:
     permissions:
       contents: write
       actions: read
+      pages: write
+      id-token: write
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -162,13 +164,32 @@ jobs:
             --site generated-site \
             --build-scope prepared-build/main
 
-      - name: Publish stable Pages branch
+      - name: Configure GitHub Pages
         if: github.ref_name == 'main'
-        env:
-          PYTHONPATH: modules/pages/src
-        run: >-
-          python -m cad_model_pages.publish
-          --repo .
-          --site generated-site
-          --source-ref main
-          --source-sha "${{ github.sha }}"
+        id: pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+
+      - name: Upload stable Pages artifact
+        if: github.ref_name == 'main'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: generated-site
+
+  pages:
+    name: pages
+    if: github.event_name != 'pull_request' && github.ref_name == 'main'
+    needs: durable
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy stable Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346

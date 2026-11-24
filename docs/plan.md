@@ -18,8 +18,11 @@ The page must join:
 The shared page layout supports optional model-owned `page.md` prose and
 declarative `extra_views`; it must not contain model-name branches.
 
-Stable publication goes to generated `gh-pages` only after a successful
-`main` run. PR site builds are read-only.
+Stable publication uses GitHub Pages artifact deployment only after a
+successful `main` run. PR site builds are read-only.
+
+The implementation is ready, but repository Pages activation is an external
+admin setting: **Settings -> Pages -> Source: GitHub Actions**.
 
 ## Accepted architecture
 
