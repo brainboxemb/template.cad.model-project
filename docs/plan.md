@@ -4,22 +4,19 @@ This file contains unfinished work only.
 
 ## Now
 
-### #81 — make local /merge mandatory for agents
+### #84 — upgrade Forge baseline to v0.15.0
 
-The repository-local merge policy exists specifically to prevent agents from
-choosing the wrong merge method.
+The template must track the accepted Forge baseline used by the current CAD
+repository. Forge v0.15.0 fixes component-context restoration during headless
+replay (#753), preventing component-local joined Cylinder tool geometry from
+remaining visible in root/world space.
 
-For every source-branch integration, agents must use a PR conversation comment:
+Accepted pin:
 
-```text
-/merge
-```
-
-The merge-policy workflow remains the sole owner of merge-method selection.
-
-Direct GitHub merge API calls, auto-merge and UI/manual merge fallback are
-forbidden for agents. A failed merge-policy run must be repaired, never
-bypassed.
+- Forge v0.15.0
+- commit `efc88bfcaf452051d721347f2e5ca561decad654`
+- SolidCraft 0.48.1
+- runtime `ghcr.io/brainboxemb/cad-solidcraft:v0.3.5`
 
 ## Accepted architecture
 
@@ -33,7 +30,7 @@ bypassed.
 - local merge-policy owns all source-branch integration and dispatches target CI;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;
-- Forge v0.14.0 / SolidCraft 0.48.1 baseline;
+- Forge v0.15.0 / SolidCraft 0.48.1 baseline;
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
@@ -42,6 +39,5 @@ bypassed.
 
 ## Next
 
-Accept #81 through the local `/merge` path itself, then promote it to
-`main` through the same policy. Sync the agent rule to the active CAD
-migration repository.
+Accept #84 through local `/merge`, promote it to `main`, then sync the exact
+toolchain pin to the active CAD repository and rebuild `hub75-screen`.
