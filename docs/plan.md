@@ -4,25 +4,24 @@ This file contains unfinished work only.
 
 ## Now
 
-### #72 — support a model-owned primary snapshot camera
+### #75 — explicit physical-model dependencies
 
-Extend the generic model-build contract so a physical model can optionally own
-the camera used for its primary `model.png`.
+Add model-local dependency edges for real assembly/component relationships.
 
-The contract is:
+Contract:
 
 ```yaml
-snapshot:
-  camera:
-    target: [0, 0, 160]
-    yaw: -0.24
-    pitch: 0.20
-    distance: 920
-    fov: 0
+dependencies:
+  - hub75-panel
+  - corner-bracket
 ```
 
-Omitting `snapshot` preserves the existing SolidCraft default camera.
-Additional named `snapshots:` remain independent.
+Dependencies name physical model owner ids. They are validated for unknown ids,
+self references and cycles. Model selection closes transitively over downstream
+dependents, and build-plan order is dependency-first.
+
+Directory group priority remains ordering metadata only; it never creates a
+dependency.
 
 ## Accepted architecture
 
@@ -31,11 +30,14 @@ Additional named `snapshots:` remain independent.
 - full `main` CI;
 - cancel-in-progress;
 - item-local impact/watch metadata;
+- directory-local model build priority;
+- explicit physical-model dependency graph for assembly impact;
 - local merge-policy dispatches target CI and branch cleanup;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;
+- Forge v0.14.0 / SolidCraft 0.48.1 baseline;
 - generated `build` branch with `dev/` and `main/` scopes;
-- compact model `ci.yml` with implicit primary snapshot;
+- compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
 - internal Python capabilities run directly from source;
 - Pages runs separately from CAD CI and is explicitly dispatched after build publication;
@@ -43,5 +45,5 @@ Additional named `snapshots:` remain independent.
 
 ## Next
 
-After #72 is accepted on `main`, sync the build-module change to the active
-CAD migration repository and continue the final six-root migration batch.
+After #75 is accepted on `main`, sync the generic CI/build changes to the
+active CAD migration repository and migrate the final six historical roots.
