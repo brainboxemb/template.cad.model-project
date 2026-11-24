@@ -37,6 +37,15 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-box", page)
         self.assertNotIn("simple-mft", page)
 
+    def test_workflow_uses_generic_pages_verifier_without_model_ids(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("python -m cad_model_pages.verify", workflow)
+        self.assertIn("--build-scope prepared-build/main", workflow)
+        self.assertNotIn("simple-box", workflow)
+        self.assertNotIn("simple-mft", workflow)
+
     def test_site_uses_accepted_hextra_version(self):
         go_mod = (SITE / "go.mod").read_text(encoding="utf-8")
         self.assertIn("github.com/imfing/hextra v0.13.0", go_mod)
