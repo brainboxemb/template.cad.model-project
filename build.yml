@@ -1,5 +1,5 @@
 schema: 1
-branch: issue/17-dispatch-target-ci
+branch: issue/22-dispatch-cleanup
 
 modules:
   - merge-policy

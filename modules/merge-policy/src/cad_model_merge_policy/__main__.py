@@ -52,10 +52,10 @@ def require_green_checks(repository: str, sha: str, token: str) -> None:
         raise MergePolicyError(f"checks not green: {', '.join(failed)}")
 
 
-def dispatch_ci(repository: str, ref: str, token: str) -> None:
+def dispatch_workflow(repository: str, workflow: str, ref: str, token: str) -> None:
     api(
         repository,
-        "actions/workflows/ci.yml/dispatches",
+        f"actions/workflows/{workflow}/dispatches",
         token,
         method="POST",
         body={"ref": ref},
@@ -92,7 +92,8 @@ def main() -> None:
     if not result.get("merged"):
         raise MergePolicyError(result.get("message", "GitHub did not merge PR"))
 
-    dispatch_ci(args.repository, base, token)
+    dispatch_workflow(args.repository, "ci.yml", base, token)
+    dispatch_workflow(args.repository, "branch-cleanup.yml", base, token)
     print(result["sha"])
 
 

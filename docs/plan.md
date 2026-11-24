@@ -4,31 +4,26 @@ This file contains unfinished work only.
 
 ## Now
 
-### #17 — dispatch target CI after local merge
+### #22 — dispatch branch cleanup after local merge
 
-After a successful local merge-policy integration, explicitly dispatch the
-local CI workflow on the PR base branch.
+Local merge-policy already dispatches target CI after a successful merge.
 
-This is required because GITHUB_TOKEN merges do not reliably create a second
-push-triggered Actions run.
+Also dispatch the independent branch-cleanup workflow on the same target ref,
+because GITHUB_TOKEN merges do not reliably emit pull_request: closed events.
 
-Acceptance:
-
-1. merge-policy has actions: write;
-2. dispatch occurs only after successful merge;
-3. dev target dispatch enters incremental dev CI;
-4. main target dispatch enters full CI;
-5. rapid dev dispatches are coalesced by CI cancel-in-progress.
+Cleanup ownership remains entirely in modules/branch-cleanup.
 
 ## Accepted
 
 - work branches use matching build.yml;
-- dev uses changes since last successful integration CI;
+- dev uses changes since the last successful integration baseline;
 - main runs full;
-- cancelled dev runs do not advance the baseline;
+- superseded CI runs are cancelled;
 - item impact is local to each item;
-- standalone branch cleanup is active.
+- local merge-policy dispatches target CI;
+- branch cleanup is a separate module.
 
-## Later
+## Next
 
-Migrate one real CAD project before adding site/release/gallery scope.
+After the automatic cleanup dispatch is live-proven, migrate one real CAD
+project before adding site/release/gallery scope.
