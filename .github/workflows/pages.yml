@@ -34,14 +34,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out pull request source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           persist-credentials: false
 
       - name: Check out build output
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: build
           path: prepared-build
@@ -49,7 +49,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -86,7 +86,7 @@ jobs:
       id-token: write
     steps:
       - name: Check out stable source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: source-main
@@ -94,7 +94,7 @@ jobs:
           persist-credentials: false
 
       - name: Check out development source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: dev
           path: source-dev
@@ -102,7 +102,7 @@ jobs:
           persist-credentials: false
 
       - name: Check out build output
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: build
           path: prepared-build
@@ -110,7 +110,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -146,10 +146,10 @@ jobs:
           --source-ref dev
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: generated-site
 
@@ -170,4 +170,4 @@ jobs:
     steps:
       - name: Deploy Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
