@@ -15,7 +15,7 @@ _HEXTRA = "github.com/imfing/hextra@v0.13.0"
 
 
 def _stage_build_scope(source_root: Path, build_scope: Path) -> Path:
-    """Stage one durable scope at the mount path expected by the site config."""
+    """Stage one build scope at the mount path expected by the site config."""
     target = source_root / "prepared-build" / "main"
     if target.exists():
         shutil.rmtree(target)
