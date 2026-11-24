@@ -57,6 +57,8 @@ def build_models(
     namespace: str,
     models: tuple[CadModel, ...],
 ) -> None:
+    if not models:
+        return
     install_module(PythonModule("build", build_module_root))
     command = [
         sys.executable,
