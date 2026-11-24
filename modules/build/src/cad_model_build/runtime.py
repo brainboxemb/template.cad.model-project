@@ -69,7 +69,7 @@ def _build_one(output_root: Path, row: dict) -> None:
             work_dir=Path(tmp),
         )
 
-    _snapshot(saved, png, row.get("snapshot_camera"))
+    _snapshot(saved, png, None)
 
     stl_value = native.get("stl")
     if stl_value:
@@ -90,7 +90,7 @@ def _build_one(output_root: Path, row: dict) -> None:
         if not stl.is_file() or stl.stat().st_size == 0:
             raise RuntimeError(f"SolidCraft produced no STL: {stl}")
 
-    for extra in native.get("extra_png", []):
+    for extra in row.get("snapshots", []):
         _snapshot(
             saved,
             output_root / extra["path"],
