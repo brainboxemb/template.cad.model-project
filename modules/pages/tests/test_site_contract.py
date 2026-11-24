@@ -56,9 +56,9 @@ class SiteContractTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("actions/configure-pages@v5", workflow)
-        self.assertIn("actions/upload-pages-artifact@v3", workflow)
-        self.assertIn("actions/deploy-pages@v4", workflow)
+        self.assertIn("actions/configure-pages@v6", workflow)
+        self.assertIn("actions/upload-pages-artifact@v5", workflow)
+        self.assertIn("actions/deploy-pages@v5", workflow)
         self.assertIn("pages: write", workflow)
         self.assertIn("id-token: write", workflow)
         self.assertNotIn("cad_model_pages.publish", workflow)
