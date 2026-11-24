@@ -1,0 +1,11 @@
+schema: 1
+
+# This work selection belongs to the single permanent development line.
+# main ignores this file.
+branch: dev
+
+models:
+  - simple-box
+
+tasks:
+  - build
