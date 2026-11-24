@@ -1,44 +1,45 @@
 from pathlib import Path
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from cad_project.config import ConfigError, load_build_config, load_project_config
+from cad_model_ci.config import ConfigError, current_branch, load_build, load_project
 
 
 class ConfigTests(unittest.TestCase):
-    def test_project_reads_exact_forge_pin_and_roots(self):
+    def test_project_reads_forge_pin_and_roots(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             (repo / "ci.yml").write_text(
                 "schema: 1\n"
+                "branches: {stable: main, development: dev}\n"
                 "dependencies:\n"
                 "  forge:\n"
                 "    repository: brainboxemb/lib.py.solidcraft.forge\n"
                 "    version: 0.13.2\n"
                 "    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4\n"
-                "models: {root: models}\n"
-                "output: {root: build}\n",
+                "roots: {modules: modules, models: models, output: build}\n",
                 encoding="utf-8",
             )
-            config = load_project_config(repo)
+            config = load_project(repo)
             self.assertEqual(config.forge.version, "0.13.2")
-            self.assertEqual(config.models_root, Path("models"))
+            self.assertEqual(config.modules_root, Path("modules"))
             self.assertEqual(config.output_root, Path("build"))
 
-    def test_build_yml_must_match_current_branch(self):
+    def test_work_branch_requires_matching_build_yml(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             (repo / "build.yml").write_text(
-                "schema: 1\nbranch: issue/1-one\nmodels: all\ntasks: [build]\n",
+                "schema: 1\nbranch: issue/1-a\nmodules: [ci]\nmodels: []\ntasks: [test]\n",
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ConfigError, "stale build.yml"):
-                load_build_config(repo, "issue/2-two")
+                load_build(repo, "issue/2-b")
 
-    def test_main_does_not_consume_build_yml(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ConfigError, "main ignores build.yml"):
-                load_build_config(Path(tmp), "main")
+    @patch.dict(os.environ, {"GITHUB_HEAD_REF": "issue/10-work"}, clear=False)
+    def test_github_head_ref_is_the_work_branch(self):
+        self.assertEqual(current_branch(Path(".")), "issue/10-work")
 
 
 if __name__ == "__main__":

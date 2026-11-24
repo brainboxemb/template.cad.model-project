@@ -1,60 +1,50 @@
 # template.cad.model-project
 
-Self-contained template for CAD model repositories with independent model roots.
+Self-contained template for CAD model repositories.
 
-## Repository shape
+Models and Python capabilities are independent build items.
 
 ```text
-.github/workflows/
-  ci.yml
-  merge-policy.yml
-cad_project/
-  config.py
-  models.py
-  forge.py
-  ci.py
-  build.py
-  merge_policy.py
-tests/
-AGENTS.md
-README.md
-pyproject.toml
 ci.yml
 build.yml
-docs/
-  plan.md
-  manual.md
-  handoff.md
+
+modules/
+  ci/
+    ci.yml
+    pyproject.toml
+    src/
+    tests/
+  build/
+    ci.yml
+    pyproject.toml
+    src/
+    tests/
+  merge-policy/
+    ci.yml
+    pyproject.toml
+    src/
+    tests/
+
 models/
   simple-box/
     ci.yml
     model.yml
     scpf/model.py
+
 build/                  # generated, ignored
 ```
 
+## Selection
+
+`ci.yml` is stable project configuration and contains the exact Forge pin.
+
+`build.yml` is the current branch's execution plan. A module-only PR selects
+only that module; a model-only PR selects only that model.
+
+`main` ignores `build.yml` and runs the complete repository.
+
 ## Branches
 
-Permanent source branches:
-
-- `main` — stable;
-- `dev` — integration/development.
-
-Short-lived branches squash into `dev`. `dev -> main` and `main -> dev`
-preserve history with merge commits.
-
-## Configuration split
-
-`ci.yml` is the stable project CI/build contract, including the exact Forge
-version and commit.
-
-`build.yml` is the current human/agent work selection. Its `branch` value
-must match the actual work branch. `main` ignores it.
-
-## Output
-
-Generated files go below root `build/`.
-
-## First model
-
-`models/simple-box` is the smallest Forge proof: one parameterized native Box.
+- short-lived branch -> `dev`: squash;
+- `dev` -> `main`: merge commit;
+- `main` -> `dev`: merge commit.

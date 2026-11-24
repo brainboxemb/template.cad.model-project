@@ -1,114 +1,91 @@
 # Model project manual
 
-## Branch workflow
+## Stable configuration
 
-Create work from `dev`.
+Root `ci.yml` defines permanent branches, the exact Forge pin and roots for
+modules, models and generated output.
 
-```text
-dev
-  -> issue/<number>-short-name
-  -> pull request to dev
-  -> squash merge
-```
+## Working selection
 
-Promote accepted development with `dev -> main`; synchronize with
-`main -> dev`. Both permanent-branch integrations use merge commits.
+Every non-main work branch updates root `build.yml`.
 
-## ci.yml
-
-Root `ci.yml` is the stable CI/build contract:
+Example CI-module-only PR:
 
 ```yaml
 schema: 1
+branch: issue/12-ci-change
 
-dependencies:
-  forge:
-    repository: brainboxemb/lib.py.solidcraft.forge
-    version: 0.13.2
-    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
-
-models:
-  root: models
-
-output:
-  root: build
+modules:
+  - ci
+models: []
+tasks:
+  - test
+  - build
 ```
 
-CI reads this file. Workflow YAML does not repeat these values.
-
-## Model roots
-
-Every direct child below `models/` with a `ci.yml` is independent.
-
-```text
-models/simple-box/
-  ci.yml
-  model.yml
-  scpf/model.py
-```
-
-Minimal model CI config:
+Example model-only PR:
 
 ```yaml
 schema: 1
-id: simple-box
-builder: forge
-source: scpf/model.py
-```
+branch: issue/13-simple-box
 
-## build.yml
-
-`build.yml` is for humans/agents, not CI.
-
-On a work branch:
-
-```yaml
-schema: 1
-branch: issue/12-change-box
-
+modules: []
 models:
   - simple-box
-
 tasks:
   - build
 ```
 
-For all models use `models: all`.
+Use `all` for either item class when required.
 
-When a new branch is created, update `branch` immediately. A mismatch is a
-stale work plan and `python -m cad_project.build` refuses to run.
+If the branch value is stale, CI fails.
 
-On `main`, `build.yml` is ignored.
+On `main`, `build.yml` is ignored and all configured items run.
 
-## Commands
+## Python module shape
 
-Install the local project package:
-
-```bash
-python -m pip install -e .
+```text
+modules/<id>/
+  ci.yml
+  pyproject.toml
+  src/
+  tests/
 ```
 
-Run module tests:
+A module PR keeps its tests inside the module and selects that module in
+`build.yml`.
 
-```bash
-python -m unittest discover -s tests -v
+## Model shape
+
+```text
+models/<id>/
+  ci.yml
+  model.yml
+  <engine source>
 ```
 
-Run normal repository CI locally:
+Model-specific verification stays with the model.
 
-```bash
-python -m cad_project.ci
+## Output
+
+Generated artifacts are written below root `build/`.
+
+## Workflows
+
+CI workflow:
+
+```text
+checkout
+  -> bootstrap modules/ci
+  -> python -m cad_model_ci
 ```
 
-Run the current developer/agent selection:
+Merge workflow:
 
-```bash
-python -m cad_project.build
+```text
+checkout
+  -> bootstrap modules/merge-policy
+  -> python -m cad_model_merge_policy
 ```
 
-Both build paths write generated output below `build/`.
-
-## Python structure
-
-Keep modules small and independently tested. Do not replace them with one large
-CI script or place model-specific knowledge into generic modules.
+Forge pins and model names do not belong in workflow YAML.
