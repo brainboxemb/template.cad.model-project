@@ -241,7 +241,7 @@ One Pages deployment contains both source/build scopes:
 ```
 
 Both scopes use the same Hugo/Hextra layouts. Each scope is verified against
-its matching build plan before the combined Pages artifact is uploaded.
+its matching build plan before the combined generated site is published.
 
 `model.yml` owns presentation text. `ci.yml` owns source/variant identity.
 The generated `build/main` scope owns JSON, SC, STEP, PNG and optional STL.
@@ -254,7 +254,8 @@ templates.
 Pages runs in a separate workflow from CAD CI. After a successful permanent
 build publishes its build scope, CI sends a `workflow_dispatch` for
 `pages.yml` and then finishes. The Pages workflow independently rebuilds both
-the stable root and `/dev/`, then uploads and deploys them atomically.
+the stable root and `/dev/`, then publishes the complete tree atomically to the
+generated `gh-pages` branch.
 
 The explicit dispatch is intentional: GitHub suppresses most chained workflow
 events created by `GITHUB_TOKEN`, while `workflow_dispatch` is allowed. CAD
@@ -262,5 +263,6 @@ CI never waits for Hugo or Pages deployment.
 
 PRs that change site-related files get a separate read-only Pages check.
 
-Repository **Settings -> Pages -> Build and deployment -> Source** must be set
-to **GitHub Actions**. No `gh-pages` source branch is required for deployment.
+Repository Pages uses the generated `gh-pages` branch as its publication source.
+The workflow itself updates that branch; no `github-pages` deployment environment
+or `actions/deploy-pages` path is part of the template contract.
