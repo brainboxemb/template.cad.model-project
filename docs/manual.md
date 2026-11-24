@@ -88,6 +88,32 @@ watch:
 Model ids are discovered from model roots; they are never centrally listed in
 Python.
 
+### Model group priority
+
+A directory above one or more model roots may define build ordering:
+
+```yaml
+schema: 1
+kind: group
+priority: 20
+```
+
+Models inherit the nearest ancestor group. Lower values build first; equal
+values are ordered by physical owner id. If no group exists, priority `1000`
+is used.
+
+Typical migration ordering is:
+
+```text
+basic / fundamentals   10
+components             20
+advanced / assemblies  30
+```
+
+Priority controls ordering only. It does not imply a model dependency and does
+not propagate selection. Explicit dependencies are deferred until an actual
+assembly requires them.
+
 ## Output
 
 Generated artifacts remain below root `build/`.

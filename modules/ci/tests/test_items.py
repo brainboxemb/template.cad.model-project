@@ -50,6 +50,74 @@ class ItemTests(unittest.TestCase):
             self.assertIn("models/components/box/**", models[0].watch)
 
 
+
+    def test_model_inherits_nearest_group_priority_and_watch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            models_root = repo / "models"
+            models_root.mkdir()
+            (models_root / "ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: 100\n",
+                encoding="utf-8",
+            )
+            components = models_root / "components"
+            components.mkdir()
+            (components / "ci.yml").write_text(
+                "schema: 1\nkind: group\npriority: 20\n",
+                encoding="utf-8",
+            )
+            model = components / "box"
+            (model / "scpf").mkdir(parents=True)
+            (model / "scpf/model.py").write_text("object()\n", encoding="utf-8")
+            (model / "ci.yml").write_text(
+                "schema: 1\nid: box\nbuilder: forge\nsource: scpf/model.py\n",
+                encoding="utf-8",
+            )
+
+            models = discover_models(repo, self.project())
+
+            self.assertEqual(len(models), 1)
+            self.assertEqual(models[0].priority, 20)
+            self.assertIn("models/components/ci.yml", models[0].watch)
+            self.assertNotIn("models/ci.yml", models[0].watch)
+
+    def test_models_are_discovered_in_priority_then_id_order(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            for group_name, priority, model_id in (
+                ("advanced", 30, "z-advanced"),
+                ("components", 20, "b-component"),
+                ("basic", 10, "a-basic"),
+            ):
+                group = repo / "models" / group_name
+                group.mkdir(parents=True)
+                (group / "ci.yml").write_text(
+                    f"schema: 1\nkind: group\npriority: {priority}\n",
+                    encoding="utf-8",
+                )
+                model = group / model_id
+                (model / "scpf").mkdir(parents=True)
+                (model / "scpf/model.py").write_text(
+                    "object()\n",
+                    encoding="utf-8",
+                )
+                (model / "ci.yml").write_text(
+                    f"schema: 1\nid: {model_id}\nbuilder: forge\n"
+                    "source: scpf/model.py\n",
+                    encoding="utf-8",
+                )
+
+            models = discover_models(repo, self.project())
+
+            self.assertEqual(
+                [model.id for model in models],
+                ["a-basic", "b-component", "z-advanced"],
+            )
+            self.assertEqual(
+                [model.priority for model in models],
+                [10, 20, 30],
+            )
+
     def test_multi_variant_root_is_one_ci_item(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

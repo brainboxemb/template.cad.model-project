@@ -87,6 +87,53 @@ class BuildPlanTests(unittest.TestCase):
                 "models/guide-rail/scpf/makita.py",
             )
 
+
+    @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
+    def test_selected_owners_are_ordered_by_priority_then_id(self, _source_sha):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            models_root = repo / "models"
+            first = ModelConfig(
+                id="advanced",
+                root=models_root / "advanced",
+                variants=(ModelVariant("advanced", Path("scpf/model.py")),),
+                artifacts=(),
+                snapshots=(),
+                priority=30,
+            )
+            second = ModelConfig(
+                id="component-b",
+                root=models_root / "component-b",
+                variants=(ModelVariant("component-b", Path("scpf/model.py")),),
+                artifacts=(),
+                snapshots=(),
+                priority=20,
+            )
+            third = ModelConfig(
+                id="component-a",
+                root=models_root / "component-a",
+                variants=(ModelVariant("component-a", Path("scpf/model.py")),),
+                artifacts=(),
+                snapshots=(),
+                priority=20,
+            )
+            plan = resolve_plan(
+                repo=repo,
+                project=self.project(),
+                models=(first, second, third),
+                selected_ids=("advanced", "component-b", "component-a"),
+                namespace="dev",
+            )
+
+            self.assertEqual(
+                [row["id"] for row in plan["models"]],
+                ["component-a", "component-b", "advanced"],
+            )
+            self.assertEqual(
+                [row["priority"] for row in plan["models"]],
+                [20, 20, 30],
+            )
+
     @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
     def test_main_is_a_valid_output_namespace(self, _source_sha):
         with tempfile.TemporaryDirectory() as tmp:

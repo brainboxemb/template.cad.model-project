@@ -20,6 +20,7 @@ _COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _PNG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.png$")
 _SUPPORTED_ARTIFACTS = frozenset({"stl"})
 _CAMERA_KEYS = frozenset({"target", "yaw", "pitch", "distance", "fov"})
+_DEFAULT_MODEL_PRIORITY = 1000
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,7 @@ class ModelConfig:
     variants: tuple[ModelVariant, ...]
     artifacts: tuple[str, ...]
     snapshots: tuple[SnapshotSpec, ...]
+    priority: int = _DEFAULT_MODEL_PRIORITY
 
 
 @dataclass(frozen=True)
@@ -273,14 +275,54 @@ def load_project(repo: Path) -> ProjectConfig:
     )
 
 
+def _group_priorities(root: Path) -> dict[Path, int]:
+    groups: dict[Path, int] = {}
+    for path in sorted(root.rglob("ci.yml")):
+        data = _mapping(path)
+        if data.get("kind") != "group":
+            continue
+        if set(data) != {"schema", "kind", "priority"}:
+            raise BuildConfigError(
+                f"group config may contain only schema, kind and priority: {path}"
+            )
+        if data.get("schema") != 1:
+            raise BuildConfigError(f"unsupported group schema: {path}")
+        priority = data.get("priority")
+        if type(priority) is not int or priority < 0:
+            raise BuildConfigError(f"group priority must be a non-negative integer: {path}")
+        groups[path.parent] = priority
+    return groups
+
+
+def _resolved_priority(
+    *,
+    model_root: Path,
+    models_root: Path,
+    groups: dict[Path, int],
+) -> int:
+    current = model_root.parent
+    while True:
+        if current in groups:
+            return groups[current]
+        if current == models_root:
+            break
+        if models_root not in current.parents:
+            break
+        current = current.parent
+    return groups.get(models_root, _DEFAULT_MODEL_PRIORITY)
+
+
 def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ...]:
     root = repo / project.models_root
+    groups = _group_priorities(root)
     result: list[ModelConfig] = []
     owner_ids: set[str] = set()
     variant_ids: set[str] = set()
 
     for path in sorted(root.rglob("ci.yml")):
         data = _mapping(path)
+        if data.get("kind") == "group":
+            continue
         if data.get("schema") != 1:
             raise BuildConfigError(f"unsupported model schema: {path}")
         process = data.get("process", True)
@@ -334,10 +376,15 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ..
                 variants=variants,
                 artifacts=tuple(artifacts),
                 snapshots=_snapshots(data, path),
+                priority=_resolved_priority(
+                    model_root=model_root,
+                    models_root=root,
+                    groups=groups,
+                ),
             )
         )
 
-    return tuple(result)
+    return tuple(sorted(result, key=lambda model: (model.priority, model.id)))
 
 
 def active_variant_ids(models: tuple[ModelConfig, ...]) -> set[str]:
