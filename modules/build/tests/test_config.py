@@ -9,6 +9,8 @@ PROJECT = """schema: 1
 branches:
   stable: main
   development: dev
+generated:
+  build_branch: build
 dependencies:
   forge:
     repository: brainboxemb/lib.py.solidcraft.forge
@@ -51,6 +53,7 @@ snapshot:
             )
 
             project = load_project(repo)
+            self.assertEqual(project.build_branch, "build")
             models = discover_models(repo, project)
             self.assertEqual(len(models), 1)
             self.assertEqual(models[0].id, "box")

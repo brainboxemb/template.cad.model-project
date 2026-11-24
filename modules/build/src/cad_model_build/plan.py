@@ -40,6 +40,7 @@ def resolve_plan(
     if missing:
         raise BuildConfigError(f"unknown selected model(s): {', '.join(missing)}")
 
+    built_source_sha = source_sha(repo)
     rows = []
     for model_id in sorted(selected_ids):
         model = by_id[model_id]
@@ -48,6 +49,7 @@ def resolve_plan(
         rows.append(
             {
                 "id": model.id,
+                "built_source_sha": built_source_sha,
                 "root": relative_root,
                 "source": (model.root / model.source).relative_to(repo).as_posix(),
                 "commands": f"{target}/solidcraft.json",
@@ -75,7 +77,7 @@ def resolve_plan(
     return {
         "schema": 1,
         "namespace": namespace,
-        "source_sha": source_sha(repo),
+        "source_sha": built_source_sha,
         "forge": {
             "repository": project.forge.repository,
             "version": project.forge.version,

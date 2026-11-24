@@ -2,8 +2,8 @@
 
 ## Stable configuration
 
-Root `ci.yml` defines permanent branches, exact Forge pin and repository
-roots.
+Root `ci.yml` defines permanent source branches, the generated build branch,
+exact Forge/SolidCraft pins and repository roots.
 
 ## Branch integration
 
@@ -122,7 +122,7 @@ model.py
 Forge compilation and SolidCraft replay are separate visible phases. The
 stored `solidcraft.json` is exactly the document replayed by SolidCraft.
 
-Durable output is namespaced by permanent integration target:
+During a run, generated output is written below the checkout:
 
 ```text
 build/
@@ -134,6 +134,23 @@ build/
     models/
 ```
 
-Temporary work branches do not get their own durable output namespace. PRs
-targeting `dev` write below `build/dev`; promotions targeting `main` write
-below `build/main`.
+Successful permanent-branch runs then publish that scope to the generated
+`build` branch. On that branch the repository root is:
+
+```text
+dev/
+  build-plan.json
+  models/
+main/
+  build-plan.json
+  models/
+```
+
+PR/work-branch builds are verification-only and never publish. Incremental
+`dev` publication replaces only selected model directories, preserves
+unselected active models, and removes model directories that are no longer
+active. A full `main` build replaces the complete `main/` scope.
+
+Publication uses normal non-force pushes and checks that the source branch still
+points at the source SHA being published. Pages/Hugo/`gh-pages` are a separate
+later concern.

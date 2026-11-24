@@ -60,6 +60,7 @@ class ModelConfig:
 class ProjectConfig:
     stable_branch: str
     development_branch: str
+    build_branch: str
     forge: ForgePin
     solidcraft: SolidCraftPin
     models_root: Path
@@ -149,16 +150,23 @@ def load_project(repo: Path) -> ProjectConfig:
 
     branches = data.get("branches")
     dependencies = data.get("dependencies")
+    generated = data.get("generated")
     roots = data.get("roots")
-    if not all(isinstance(value, dict) for value in (branches, dependencies, roots)):
+    if not all(
+        isinstance(value, dict)
+        for value in (branches, generated, dependencies, roots)
+    ):
         raise BuildConfigError(
-            f"branches, dependencies and roots must be mappings: {path}"
+            f"branches, generated, dependencies and roots must be mappings: {path}"
         )
 
     stable = branches.get("stable")
     development = branches.get("development")
     if not isinstance(stable, str) or not isinstance(development, str):
         raise BuildConfigError(f"branch names must be strings: {path}")
+    build_branch = generated.get("build_branch")
+    if not isinstance(build_branch, str) or not _ID.fullmatch(build_branch):
+        raise BuildConfigError(f"generated.build_branch is invalid: {path}")
 
     forge = dependencies.get("forge")
     solidcraft = dependencies.get("solidcraft")
@@ -190,6 +198,7 @@ def load_project(repo: Path) -> ProjectConfig:
     return ProjectConfig(
         stable_branch=stable,
         development_branch=development,
+        build_branch=build_branch,
         forge=ForgePin(repository, version, commit),
         solidcraft=SolidCraftPin(image, solidcraft_version),
         models_root=_relative(roots.get("models"), "roots.models", path),

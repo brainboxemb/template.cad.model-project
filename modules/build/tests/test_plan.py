@@ -19,6 +19,7 @@ class BuildPlanTests(unittest.TestCase):
         return ProjectConfig(
             stable_branch="main",
             development_branch="dev",
+            build_branch="build",
             forge=ForgePin("brainboxemb/lib.py.solidcraft.forge", "0.14.0", "a" * 40),
             solidcraft=SolidCraftPin(
                 "ghcr.io/brainboxemb/cad-solidcraft:v0.3.5",
@@ -51,6 +52,8 @@ class BuildPlanTests(unittest.TestCase):
                 namespace="dev",
             )
             self.assertEqual(plan["namespace"], "dev")
+            self.assertEqual(plan["source_sha"], "b" * 40)
+            self.assertEqual(plan["models"][0]["built_source_sha"], "b" * 40)
             self.assertEqual(plan["models"][0]["commands"], "models/box/solidcraft.json")
             self.assertEqual(plan["models"][0]["native"]["sc"], "models/box/model.sc")
             self.assertEqual(plan["models"][0]["native"]["step"], "models/box/model.step")
