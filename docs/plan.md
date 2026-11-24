@@ -4,6 +4,15 @@ This file contains unfinished work only.
 
 ## Now
 
+### #86 — adopt Forge v0.15.0
+
+Adopt release source `efc88bfcaf452051d721347f2e5ca561decad654`
+while keeping SolidCraft 0.48.1/runtime v0.3.5 unchanged.
+
+This release carries native applied-feature pattern sources (#347), the
+component-context replay fix (#753), and native exploded assembly views (#751).
+
+
 ### #81 — make local /merge mandatory for agents
 
 The repository-local merge policy exists specifically to prevent agents from
@@ -33,7 +42,7 @@ bypassed.
 - local merge-policy owns all source-branch integration and dispatches target CI;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;
-- Forge v0.14.0 / SolidCraft 0.48.1 baseline;
+- Forge v0.15.0 / SolidCraft 0.48.1 baseline;
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
