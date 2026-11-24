@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import tempfile
 
-from .config import BuildConfigError, discover_models, load_project
+from .config import active_variant_ids, BuildConfigError, discover_models, load_project
 
 
 class PublishError(RuntimeError):
@@ -220,7 +220,7 @@ def publish(
     if not candidate_plan["models"]:
         return None
 
-    active_ids = {model.id for model in discover_models(repo, project)}
+    active_ids = active_variant_ids(discover_models(repo, project))
     _require_fresh_source(repo, source_ref, source_sha)
 
     for attempt in range(1, attempts + 1):
