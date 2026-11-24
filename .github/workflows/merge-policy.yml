@@ -27,4 +27,3 @@ jobs:
       stable_branch: main
       development_branches: '["dev"]'
       permanent_branches: '[]'
-      integration_workflow: ci.yml
