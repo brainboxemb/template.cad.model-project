@@ -39,7 +39,7 @@ jobs:
           PYTHONPATH: modules/ci/src
         run: python -m cad_model_ci
 
-      - name: Check out durable build evidence
+      - name: Check out build output
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: build
@@ -73,8 +73,8 @@ jobs:
             --site generated-site \
             --build-scope prepared-build/main
 
-  durable:
-    name: durable
+  build:
+    name: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -102,7 +102,7 @@ jobs:
           PYTHONPATH: modules/ci/src
         run: python -m cad_model_ci
 
-      - name: Publish durable build scope
+      - name: Publish build scope
         env:
           PYTHONPATH: modules/build/src
           SOURCE_REF: ${{ github.ref_name }}
@@ -126,7 +126,7 @@ jobs:
             --source-sha "$SOURCE_SHA" \
             "${publish_args[@]}"
 
-      - name: Check out durable stable build evidence
+      - name: Check out stable build output
         if: github.ref_name == 'main'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -178,7 +178,7 @@ jobs:
   pages:
     name: pages
     if: github.event_name != 'pull_request' && github.ref_name == 'main'
-    needs: durable
+    needs: build
     runs-on: ubuntu-latest
     concurrency:
       group: pages-deploy
