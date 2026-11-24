@@ -1,10 +1,8 @@
 schema: 1
-branch: issue/11-branch-cleanup
+branch: dev
 
-modules:
-  - branch-cleanup
-
-models: []
+modules: all
+models: all
 
 tasks:
   - test
