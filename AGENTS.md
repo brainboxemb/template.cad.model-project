@@ -42,9 +42,9 @@ source branch is removed by `modules/branch-cleanup`.
 The generated `build` branch is not a source branch. It stores durable technical
 output for the permanent source scopes and is never a cleanup candidate.
 
-The generated `gh-pages` branch is also not a source branch. Stable Pages are
-built only from `main` source plus accepted `build/main` evidence and published
-there after a successful stable run.
+Stable GitHub Pages are built only from `main` source plus accepted
+`build/main` evidence. Deployment uses GitHub's Pages artifact/deployment
+actions; Pages output is not maintained as another repository source branch.
 
 ## CI selection modes
 
@@ -110,6 +110,10 @@ The page data boundary is explicit:
 
 Shared layouts must not branch on model names. Model-specific content belongs in
 model-owned metadata/resources. Pages never runs Forge or SolidCraft.
+
+The repository Pages source must be configured as **GitHub Actions**. The stable
+workflow uploads the verified Hugo output as a Pages artifact and a separate
+deployment job publishes it to the `github-pages` environment.
 
 ## Item impact
 

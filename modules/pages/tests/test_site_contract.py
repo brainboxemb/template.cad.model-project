@@ -46,6 +46,27 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-box", workflow)
         self.assertNotIn("simple-mft", workflow)
 
+    def test_workflow_uses_official_pages_artifact_deployment(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b",
+            workflow,
+        )
+        self.assertIn(
+            "actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa",
+            workflow,
+        )
+        self.assertIn(
+            "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346",
+            workflow,
+        )
+        self.assertIn("pages: write", workflow)
+        self.assertIn("id-token: write", workflow)
+        self.assertNotIn("cad_model_pages.publish", workflow)
+        self.assertNotIn("pages_branch", workflow)
+
     def test_site_uses_accepted_hextra_version(self):
         go_mod = (SITE / "go.mod").read_text(encoding="utf-8")
         self.assertIn("github.com/imfing/hextra v0.13.0", go_mod)
