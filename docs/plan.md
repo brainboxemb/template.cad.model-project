@@ -4,21 +4,12 @@ This file contains unfinished work only.
 
 ## Now
 
-### #47 — model-group ordering before dependencies
+### #48 — restore `gh-pages` publication
 
-Add directory-level group priorities so model migration/build order can proceed
-from low-level models through components to advanced assemblies.
-
-Priority is ordering only:
-
-```text
-basic / fundamentals   10
-components             20
-advanced / assemblies  30
-```
-
-Models inherit the nearest group `ci.yml`; equal priorities sort by owner id.
-Do not add dependency propagation in this issue.
+Keep Pages separate and asynchronously dispatched after build publication, but
+publish the combined stable `/` and development `/dev/` site to the generated
+`gh-pages` branch. Do not use `actions/deploy-pages` or a `github-pages`
+environment.
 
 ## Accepted architecture
 
@@ -35,10 +26,10 @@ Do not add dependency propagation in this issue.
 - physical model owners may expand into multiple build variants;
 - internal Python capabilities run directly from source;
 - Pages runs separately from CAD CI and is explicitly dispatched after build publication;
-- Pages publishes stable `/` and development `/dev/` in one deployment.
+- Pages publishes stable `/` and development `/dev/` as one generated `gh-pages` tree.
 
 ## Next
 
-After #47 is accepted, treat this template as the v1 baseline and start
+After #48 is accepted, treat this template as the v1 baseline and start
 migrating real CAD models. Add explicit model dependencies only when the first
 advanced/assembly migration supplies a concrete dependency case.
