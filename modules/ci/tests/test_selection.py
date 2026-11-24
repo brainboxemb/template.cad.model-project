@@ -95,7 +95,7 @@ class SelectionTests(unittest.TestCase):
             models=MODELS,
         )
         self.assertEqual(result.modules, ("build",))
-        self.assertEqual(result.models, ("box", "plate"))
+        self.assertEqual(result.models, ("box", "case", "plate", "screen"))
 
     def test_changed_ci_module_is_full(self):
         result = changed_selection(
