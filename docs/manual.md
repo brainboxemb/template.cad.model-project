@@ -111,8 +111,27 @@ advanced / assemblies  30
 ```
 
 Priority controls ordering only. It does not imply a model dependency and does
-not propagate selection. Explicit dependencies are deferred until an actual
-assembly requires them.
+not propagate selection.
+
+### Model dependencies
+
+A model that consumes another physical model owner declares that relationship
+explicitly in its own `ci.yml`:
+
+```yaml
+dependencies:
+  - hub75-panel
+  - corner-bracket
+```
+
+Dependencies name physical owner ids, not build-variant ids. Unknown, self and
+cyclic dependencies are invalid.
+
+Any explicit or incremental model selection is closed transitively over
+downstream dependents. A change to a reusable component therefore also rebuilds
+every consuming assembly. The build plan orders selected dependencies before
+their consumers; directory priority and owner id remain the deterministic order
+among models that are otherwise ready.
 
 ## Output
 

@@ -137,6 +137,44 @@ class BuildPlanTests(unittest.TestCase):
             )
 
     @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
+    def test_dependency_precedes_consumer_even_when_priority_would_not(self, _source_sha):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            root = repo / "models"
+            dependency = ModelConfig(
+                id="component",
+                root=root / "component",
+                variants=(ModelVariant("component", Path("scpf/model.py")),),
+                artifacts=(),
+                snapshots=(),
+                priority=50,
+            )
+            consumer = ModelConfig(
+                id="assembly",
+                root=root / "assembly",
+                variants=(ModelVariant("assembly", Path("scpf/model.py")),),
+                artifacts=(),
+                snapshots=(),
+                priority=10,
+                dependencies=("component",),
+            )
+            plan = resolve_plan(
+                repo=repo,
+                project=self.project(),
+                models=(consumer, dependency),
+                selected_ids=("assembly", "component"),
+                namespace="dev",
+            )
+            self.assertEqual(
+                [row["id"] for row in plan["models"]],
+                ["component", "assembly"],
+            )
+            self.assertEqual(
+                plan["models"][1]["dependencies"],
+                ["component"],
+            )
+
+    @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
     def test_main_is_a_valid_output_namespace(self, _source_sha):
         with tempfile.TemporaryDirectory() as tmp:
             plan = resolve_plan(

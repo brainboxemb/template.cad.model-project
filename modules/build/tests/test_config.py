@@ -229,6 +229,58 @@ variants:
             ):
                 discover_models(repo, load_project(repo))
 
+    def test_dependencies_are_discovered_and_validated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            component = repo / "models" / "panel"
+            assembly = repo / "models" / "screen"
+            write_source(component, "scpf/model.py")
+            write_source(assembly, "scpf/model.py")
+            (component / "ci.yml").write_text(
+                "schema: 1\nid: panel\nbuilder: forge\nsource: scpf/model.py\n",
+                encoding="utf-8",
+            )
+            (assembly / "ci.yml").write_text(
+                "schema: 1\nid: screen\nbuilder: forge\nsource: scpf/model.py\n"
+                "dependencies: [panel]\n",
+                encoding="utf-8",
+            )
+
+            models = discover_models(repo, load_project(repo))
+            by_id = {model.id: model for model in models}
+            self.assertEqual(by_id["screen"].dependencies, ("panel",))
+
+    def test_unknown_dependency_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            model = repo / "models" / "screen"
+            write_source(model, "scpf/model.py")
+            (model / "ci.yml").write_text(
+                "schema: 1\nid: screen\nbuilder: forge\nsource: scpf/model.py\n"
+                "dependencies: [missing]\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(BuildConfigError, "unknown model dependency"):
+                discover_models(repo, load_project(repo))
+
+    def test_dependency_cycle_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_project(repo)
+            for model_id, dependency in (("a", "b"), ("b", "a")):
+                model = repo / "models" / model_id
+                write_source(model, "scpf/model.py")
+                (model / "ci.yml").write_text(
+                    f"schema: 1\nid: {model_id}\nbuilder: forge\n"
+                    "source: scpf/model.py\n"
+                    f"dependencies: [{dependency}]\n",
+                    encoding="utf-8",
+                )
+            with self.assertRaisesRegex(BuildConfigError, "cyclic model dependency"):
+                discover_models(repo, load_project(repo))
+
     def test_snapshots_are_optional(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
