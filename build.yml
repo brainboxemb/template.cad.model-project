@@ -1,10 +1,12 @@
 schema: 1
-branch: fix/48-main-dev-pages-scopes
+branch: issue/47-model-group-priority
 
 modules:
   - ci
-  - pages
-models: []
+  - build
+models:
+  - simple-box
 
 tasks:
   - test
+  - build
