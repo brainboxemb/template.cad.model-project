@@ -10,6 +10,9 @@ branches:
     - docs/
     - chore/
 
+generated:
+  build_branch: build
+
 dependencies:
   forge:
     repository: brainboxemb/lib.py.solidcraft.forge
