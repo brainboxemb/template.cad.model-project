@@ -4,7 +4,7 @@ This file contains unfinished work only.
 
 ## Now
 
-### #84 — upgrade Forge baseline to v0.15.0
+### #88 — upgrade Forge baseline to v0.15.0
 
 The template must track the accepted Forge baseline used by the current CAD
 repository. Forge v0.15.0 fixes component-context restoration during headless
@@ -39,5 +39,5 @@ Accepted pin:
 
 ## Next
 
-Accept #84 through local `/merge`, promote it to `main`, then sync the exact
+Accept #88 through local `/merge`, promote it to `main`, then sync the exact
 toolchain pin to the active CAD repository and rebuild `hub75-screen`.
