@@ -2,50 +2,55 @@
 
 This file contains unfinished work only.
 
-## Current baseline
+## Accepted baseline
 
-Stage 1 establishes the smallest useful CAD model-project template:
+Stage 1 is accepted:
 
-- permanent branches: `main` and `dev`;
-- feature -> dev uses squash;
-- dev <-> main integration preserves history with merge commits;
-- root `ci.yml` is stable CI/project configuration;
+- permanent source branches: `main` and `dev`;
+- short-lived branch -> `dev`: squash through the shared merge policy;
+- `dev` -> `main` and `main` -> `dev`: merge commits;
+- root `ci.yml` is stable project/CI configuration;
 - root `build.yml` is human/agent working-build selection only;
-- model roots live independently below `models/`;
+- normal CI does not read `build.yml`;
+- independent model roots live below `models/`;
 - generated output lives below ignored `build/`;
-- one Forge model proves the initial authoring/build path.
+- `models/simple-box` builds successfully with exact Forge v0.13.2.
 
-## Now
+The first accepted stable baseline is main commit
+`c297799bd87b1ead3a92ad0813f5b213ad921734`.
 
-### #1 — stage-1 baseline
-
-Acceptance:
-
-1. repository structure and documentation exist;
-2. `dev` is the only permanent development branch;
-3. shared merge policy is configured for `main` + `dev`;
-4. normal CI builds the Forge `simple-box` without reading `build.yml`;
-5. the result is written below `build/models/simple-box/`;
-6. no repository Python helper/orchestrator is required.
+The first policy-driven permanent synchronization is dev commit
+`5581f7521d023facce0da9f4b23f17800716d5c9`, a two-parent merge commit.
+Its policy-dispatched CI run `45369555427` is green.
 
 ## External owner gaps
 
-These are tracked in their owner repositories and must not be worked around by
-copying generic code here:
+Do not work around these by copying generic code into the template:
 
 - `lib.py.cad.ci #141` — normal root configuration name `ci.yml`;
 - `lib.py.cad.ci #142` — reusable generic Forge model builder.
 
-The stage-1 direct Forge compile is intentionally small. Replace it with the
-released generic CAD-CI path once those owner capabilities are accepted.
+The current direct Forge compile is intentionally small and temporary.
 
 ## Next
 
-After stage 1:
+Use this template to migrate one real CAD model project before expanding it.
 
-- prove a second independent model can be added without editing the first;
-- add focused model verification only where the model needs it;
-- migrate a real CAD project to this structure before expanding the template.
+That migration should prove:
 
-Do not add site generation, release automation, multiple development branches
-or a central model catalog until a real migrated project demonstrates the need.
+1. a second independent model can be added without editing the first;
+2. model-specific verification remains model-owned;
+3. project-specific Python, if needed, is split into small independently tested
+   modules;
+4. no site, release or model-catalog machinery is added without a demonstrated
+   project need.
+
+## Repository setting still required
+
+The shared merge policy selects the correct merge method when `/merge` is
+used.
+
+GitHub branch/ruleset protection must additionally require pull requests for
+`main` and `dev` so manual merge/direct-push paths cannot bypass that policy.
+This repository currently has no ruleset. Configure that in GitHub repository
+settings; it cannot be written by the connected GitHub app used here.
