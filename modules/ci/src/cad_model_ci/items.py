@@ -13,12 +13,15 @@ from .config import ConfigError, ProjectConfig
 
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_IMPACTS = {"self", "models", "full"}
 
 
 @dataclass(frozen=True)
 class PythonModule:
     id: str
     root: Path
+    impact: str = "self"
+    watch: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -27,6 +30,7 @@ class CadModel:
     root: Path
     builder: str
     source: Path
+    watch: tuple[str, ...] = ()
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -43,6 +47,27 @@ def _id(data: dict[str, Any], path: Path) -> str:
     return value
 
 
+def _impact(data: dict[str, Any], path: Path) -> str:
+    value = data.get("impact", "self")
+    if value not in _IMPACTS:
+        raise ConfigError(f"impact must be one of {sorted(_IMPACTS)}: {path}")
+    return value
+
+
+def _watch(
+    data: dict[str, Any],
+    *,
+    default: str,
+    path: Path,
+) -> tuple[str, ...]:
+    extra = data.get("watch", [])
+    if not isinstance(extra, list) or not all(
+        isinstance(value, str) and value for value in extra
+    ):
+        raise ConfigError(f"watch must be a string list: {path}")
+    return (default, *extra)
+
+
 def discover_modules(repo: Path, project: ProjectConfig) -> tuple[PythonModule, ...]:
     root = repo / project.modules_root
     result: list[PythonModule] = []
@@ -53,7 +78,15 @@ def discover_modules(repo: Path, project: ProjectConfig) -> tuple[PythonModule, 
         data = _load(path)
         if data.get("kind") != "python":
             raise ConfigError(f"module kind must be python: {path}")
-        result.append(PythonModule(_id(data, path), child))
+        relative = child.relative_to(repo).as_posix()
+        result.append(
+            PythonModule(
+                id=_id(data, path),
+                root=child,
+                impact=_impact(data, path),
+                watch=_watch(data, default=f"{relative}/**", path=path),
+            )
+        )
     return tuple(result)
 
 
@@ -77,7 +110,16 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
             raise ConfigError(f"model source must remain inside model root: {path}")
         if not (child / source_path).is_file():
             raise ConfigError(f"model source does not exist: {child / source_path}")
-        result.append(CadModel(model_id, child, builder, source_path))
+        relative = child.relative_to(repo).as_posix()
+        result.append(
+            CadModel(
+                id=model_id,
+                root=child,
+                builder=builder,
+                source=source_path,
+                watch=_watch(data, default=f"{relative}/**", path=path),
+            )
+        )
     return tuple(result)
 
 

@@ -1,8 +1,10 @@
 schema: 1
-branch: dev
+branch: issue/15-preserve-build-selection
 
-modules: all
-models: all
+modules:
+  - ci
+
+models: []
 
 tasks:
   - test
