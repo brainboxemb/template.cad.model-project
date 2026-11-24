@@ -113,6 +113,7 @@ def resolve_plan(
         "source_sha": built_source_sha,
         "forge": {
             "repository": project.forge.repository,
+            "release": project.forge.release,
             "version": project.forge.version,
             "commit": project.forge.commit,
         },
