@@ -1,1 +1,1 @@
-# template.cad-model-project
+# template.cad.model-project
