@@ -18,8 +18,21 @@ class PagesVerifyTests(unittest.TestCase):
             model.mkdir(parents=True)
             page.mkdir(parents=True)
             build.mkdir(parents=True)
-            (site / "index.html").write_text("home", encoding="utf-8")
-            (site / "models/index.html").write_text("models", encoding="utf-8")
+            (site / "index.html").write_text(
+                "home · Recently updated models",
+                encoding="utf-8",
+            )
+            (site / "models/index.html").write_text(
+                "Basic Models · Components · Advanced Models",
+                encoding="utf-8",
+            )
+            for category in ("basic", "components", "advanced"):
+                category_page = site / "models" / category
+                category_page.mkdir(parents=True)
+                (category_page / "index.html").write_text(
+                    category,
+                    encoding="utf-8",
+                )
 
             (model / "model.yml").write_text(
                 "title: Variant A\nparameters: 10 × 20 mm\n",
