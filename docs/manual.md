@@ -5,6 +5,17 @@
 Root `ci.yml` defines permanent branches, exact Forge pin and repository
 roots.
 
+## Branch integration
+
+Promote accepted development with a merge-commit PR from `dev` to `main`.
+
+Do not routinely merge `main` back into `dev` after that promotion. The
+promotion merge commit itself does not need to be copied back.
+
+Use `main` -> `dev` only when `main` contains real content that `dev`
+does not have, such as a stable-branch hotfix. That integration also uses a
+merge commit.
+
 ## CI modes
 
 ### Work branch / PR
