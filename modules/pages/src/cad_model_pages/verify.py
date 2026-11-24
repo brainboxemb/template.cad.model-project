@@ -1,4 +1,4 @@
-"""Verify generated model Pages against one durable build scope."""
+"""Verify generated model Pages against one build scope."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import yaml
 
 
 class PagesVerificationError(RuntimeError):
-    """Generated Pages do not match the accepted durable build scope."""
+    """Generated Pages do not match the accepted build scope."""
 
 
 def _require_file(path: Path) -> None:
@@ -59,13 +59,13 @@ def verify(*, repo: Path, site: Path, build_scope: Path) -> None:
     plan = _load_json(build_scope / "build-plan.json")
     rows = plan.get("models")
     if not isinstance(rows, list) or not rows:
-        raise PagesVerificationError("durable build plan contains no models")
+        raise PagesVerificationError("build plan contains no models")
 
     solidcraft = plan.get("solidcraft")
     if not isinstance(solidcraft, dict) or not isinstance(
         solidcraft.get("version"), str
     ):
-        raise PagesVerificationError("durable build plan lacks SolidCraft version")
+        raise PagesVerificationError("build plan lacks SolidCraft version")
     solidcraft_version = solidcraft["version"]
 
     _require_file(site / "index.html")
@@ -161,7 +161,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     verify(repo=args.repo, site=args.site, build_scope=args.build_scope)
-    print("Generated Pages match durable build plan")
+    print("Generated Pages match build plan")
     return 0
 
 
