@@ -10,8 +10,6 @@ import re
 import subprocess
 import tempfile
 
-from scpf.headless import run_document
-
 
 _VERSION = re.compile(r"(?<!\d)(\d+\.\d+\.\d+)(?!\d)")
 
@@ -52,6 +50,8 @@ def _snapshot(saved: Path, target: Path, camera: dict | None) -> None:
 
 
 def _build_one(output_root: Path, row: dict) -> None:
+    from scpf.headless import run_document
+
     commands_path = output_root / row["commands"]
     document = json.loads(commands_path.read_text(encoding="utf-8"))
     native = row["native"]
