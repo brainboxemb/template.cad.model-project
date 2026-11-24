@@ -18,7 +18,7 @@ Core rules:
 - internal Python capabilities live under modules/<id>/ and execute from src/;
 - CAD models are physical owner roots discovered from model-local ci.yml;
 - one owner may expand into multiple build variants;
-- generated CAD output is durable on build/{dev,main};
+- generated CAD output is stored on build/{dev,main};
 - model.png is implicit; STL and additional snapshots are opt-in model config;
 - site/model presentation uses shared Hugo/Hextra layouts;
 - model.yml owns presentation metadata, ci.yml owns build/source identity;
