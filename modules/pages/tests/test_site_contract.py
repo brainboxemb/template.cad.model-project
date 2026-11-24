@@ -60,16 +60,19 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("workflow_run:", workflow)
         self.assertIn("if: github.event_name == 'workflow_dispatch'", workflow)
 
-    def test_pages_workflow_uses_official_artifact_deployment(self):
+    def test_pages_workflow_publishes_configured_gh_pages_branch(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("actions/configure-pages@v6", workflow)
-        self.assertIn("actions/upload-pages-artifact@v5", workflow)
-        self.assertIn("actions/deploy-pages@v5", workflow)
-        self.assertIn("pages: write", workflow)
-        self.assertIn("id-token: write", workflow)
-        self.assertNotIn("cad_model_pages.publish", workflow)
+        config = (ROOT / "ci.yml").read_text(encoding="utf-8")
+        self.assertIn("pages_branch: gh-pages", config)
+        self.assertIn("cad_model_pages.publish", workflow)
+        self.assertIn("--repo source-main", workflow)
+        self.assertIn("contents: write", workflow)
+        self.assertNotIn("actions/configure-pages", workflow)
+        self.assertNotIn("actions/upload-pages-artifact", workflow)
+        self.assertNotIn("actions/deploy-pages", workflow)
+        self.assertNotIn("github-pages", workflow)
 
     def test_site_uses_accepted_hextra_version(self):
         go_mod = (SITE / "go.mod").read_text(encoding="utf-8")
