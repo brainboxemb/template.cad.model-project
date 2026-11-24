@@ -1,11 +1,9 @@
 schema: 1
-branch: feature/github-stl-viewer-link
+branch: docs/mandatory-local-merge
 
 modules:
-  - pages
-models:
-  - simple-box
+  - merge-policy
+models: []
 
 tasks:
   - test
-  - build
