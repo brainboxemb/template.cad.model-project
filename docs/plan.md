@@ -2,33 +2,40 @@
 
 This file contains unfinished work only.
 
+## Current acceptance
+
+The template now has:
+
+- one stable `main` and one development `dev` branch;
+- independent Python modules with module-local tests;
+- independent CAD model roots;
+- branch-local work selection through `build.yml`;
+- incremental `dev` CI from the last successful integration baseline;
+- full `main` CI;
+- CI cancellation for superseded runs;
+- item-local impact/watch metadata;
+- local merge-policy with target CI dispatch;
+- independent branch cleanup.
+
 ## Now
 
-### #17 — dispatch target CI after local merge
+### #20 — end-to-end local merge acceptance
 
-After a successful local merge-policy integration, explicitly dispatch the
-local CI workflow on the PR base branch.
+Prove one docs-only PR through:
 
-This is required because GITHUB_TOKEN merges do not reliably create a second
-push-triggered Actions run.
+```text
+work branch
+  -> matching build.yml
+  -> /merge
+  -> squash into dev
+  -> explicit target CI dispatch
+  -> incremental docs-only dev run
+  -> branch cleanup
+```
 
-Acceptance:
+Expected: no CAD model or unrelated module build.
 
-1. merge-policy has actions: write;
-2. dispatch occurs only after successful merge;
-3. dev target dispatch enters incremental dev CI;
-4. main target dispatch enters full CI;
-5. rapid dev dispatches are coalesced by CI cancel-in-progress.
+## Next
 
-## Accepted
-
-- work branches use matching build.yml;
-- dev uses changes since last successful integration CI;
-- main runs full;
-- cancelled dev runs do not advance the baseline;
-- item impact is local to each item;
-- standalone branch cleanup is active.
-
-## Later
-
-Migrate one real CAD project before adding site/release/gallery scope.
+After this acceptance proof, use the template to migrate one real CAD project
+before adding site/release/gallery scope.
