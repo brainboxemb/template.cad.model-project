@@ -2,76 +2,40 @@
 
 This file contains unfinished work only.
 
-## Current baseline
-
-The repository structure is established:
-
-- permanent source branches: `main` and `dev`;
-- short-lived branch -> `dev`: squash through the shared merge policy;
-- `dev` -> `main` and `main` -> `dev`: merge commits;
-- root `ci.yml` is the intended stable project/CI configuration;
-- root `build.yml` is human/agent working-build selection only;
-- independent model roots live below `models/`;
-- generated output belongs below ignored `build/`;
-- `models/simple-box` is a valid minimal Forge model source;
-- Forge is pinned in root `ci.yml` by version and exact commit.
-
-The direct GitHub Actions Forge build used during bootstrap was rejected as
-consumer-local CI implementation. Its successful run proves only that the model
-source compiles; it is **not** accepted as the project CI architecture.
-
 ## Now
 
-### #7 — remove repository-local CI implementation
+### #7 — self-contained local CI modules
 
-Required:
+Replace the rejected inline model-building workflow with the intended local
+architecture:
 
-1. no model build implementation in `.github/workflows/`;
-2. `AGENTS.md` prohibits runtime/package/model build logic in repository
-   workflows;
-3. shared merge policy remains active without dispatching a local integration
-   workflow;
-4. model CI remains unavailable rather than being locally reimplemented until
-   the released shared CAD-CI layer can consume this repository contract.
+- workflow YAML is thin;
+- root `ci.yml` owns the exact Forge pin and project roots;
+- root `build.yml` owns current branch/model/task selection for humans/agents;
+- CI never reads `build.yml`;
+- small `cad_project.*` modules own configuration, model discovery, Forge
+  execution, CI, working builds and merge policy;
+- each module has focused tests;
+- no shared CAD-CI or shared merge workflow is used.
 
-### Stage-1 shared CI completion
+Acceptance:
 
-Stage 1 is complete only when the released shared CAD-CI stack can consume:
+1. unit tests for the local modules are green;
+2. CI builds `models/simple-box` from `ci.yml`;
+3. generated result is below `build/models/simple-box/`;
+4. changing/adding a model does not require a central model catalog;
+5. a working build rejects stale `build.yml.branch`;
+6. feature -> dev is squash;
+7. dev -> main and main -> dev are merge commits.
 
-- root `ci.yml`;
-- its exact Forge dependency pin;
-- independent `models/*` roots;
-- model-local `builder: forge`;
-- generated output below `build/`;
+## Later
 
-without repository-owned generic build scripts or model commands in Actions.
-
-External owner gaps:
-
-- `lib.py.cad.ci #141` — normal root config name `ci.yml`;
-- `lib.py.cad.ci #142` — generic Forge model builder.
-
-Do not work around these gaps in this repository.
-
-## Next
-
-After shared CI works, use this template to migrate one real CAD model project
-before expanding it.
-
-That migration should prove:
-
-1. a second independent model can be added without editing the first;
-2. model-specific verification remains model-owned;
-3. project-specific Python, if needed, is split into small independently tested
-   modules;
-4. no site, release or model-catalog machinery is added without a demonstrated
-   project need.
+Use the accepted template to migrate one real CAD project before adding site,
+release, gallery or additional engine features.
 
 ## Repository setting still required
 
-The shared merge policy selects the correct merge method when `/merge` is
-used.
+GitHub branch/ruleset protection should require pull requests for `main` and
+`dev` so direct pushes/manual merges cannot bypass the local merge policy.
 
-GitHub branch/ruleset protection must additionally require pull requests for
-`main` and `dev` so direct pushes/manual merges cannot bypass that policy.
 The connected GitHub app cannot configure administration-level protection.

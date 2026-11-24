@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is a reusable CAD model-project template.
+This repository is a reusable, self-contained CAD model-project template.
 
 Keep it smaller and clearer than the product repositories created from it.
 
@@ -12,9 +12,12 @@ Before changing models:
 
 1. read `docs/plan.md`;
 2. read `build.yml`;
-3. confirm the work targets the `dev` development line;
-4. change only the selected model(s) and their owned tests/configuration;
-5. keep generated output below `build/`.
+3. compare `build.yml.branch` with the actual Git branch;
+4. update `build.yml` immediately when a new work branch is created;
+5. change only the selected model(s) and their owned tests/configuration;
+6. keep generated output below `build/`.
+
+On `main`, ignore `build.yml`.
 
 ## Branch model
 
@@ -33,50 +36,62 @@ Required integration:
 
 Do not merge feature branches directly to `main`.
 
-## CI boundary
+The repository owns this policy locally. Do not replace it with a shared
+reusable merge workflow.
 
-GitHub Actions is orchestration-only.
+## CI architecture
 
-A repository workflow may:
+The repository owns its CI implementation locally.
 
-- define triggers;
-- define the minimum permissions required by the called workflow;
-- call an exact released shared workflow;
-- pass repository configuration inputs defined by that workflow.
+GitHub workflow YAML must stay thin. It may:
 
-A repository workflow must **not**:
+- define triggers and permissions;
+- check out the repository;
+- bootstrap the local Python package;
+- invoke focused local project modules.
 
-- install Python, Forge, SolidCraft or another CAD/runtime package;
-- use `actions/setup-python` for model execution;
-- run `pip install` for model/CI dependencies;
-- invoke `python -m scpf`, SolidCraft, Docker or another CAD engine directly;
-- name or enumerate models;
-- decide changed/selected models;
-- create, copy, validate or publish model build output;
-- implement build, verification, cache or publication behavior with `run:`;
-- add repository-local generic CI scripts to replace missing shared behavior.
+Workflow YAML must **not** contain:
 
-Normal model CI must come from the released shared CAD-CI stack.
+- Forge repository/version/commit pins;
+- model ids or model paths;
+- direct `python -m scpf` model execution;
+- model selection logic;
+- build-output path logic;
+- merge-method classification;
+- large shell/Python implementations.
 
-If the shared owner layer cannot perform a required operation, stop and record
-or fix that capability in its owner repository. Do not make this template green
-with consumer-local workflow logic.
+Those responsibilities belong in versioned repository configuration and small,
+tested Python modules.
 
-Violation of this boundary is a blocking review defect.
+The root `ci.yml` is the stable CI/build contract. It owns:
 
-## CI versus working builds
+- exact Forge dependency repository/version/commit;
+- model source root;
+- generated output root.
 
-Do not mix CI selection with current agent/developer work selection.
+Normal CI uses `ci.yml` and builds the repository model set. It never reads
+`build.yml`.
 
-- root `ci.yml` is stable project/CI configuration;
-- root `build.yml` is current work selection for humans/agents;
-- GitHub CI never uses `build.yml`;
-- `main` ignores `build.yml`;
-- generated output is always below root `build/`.
+## Working builds
 
-A feature branch based on `dev` may change the model/task selection in
-`build.yml`. The `branch: dev` field identifies the permanent development
-line the work plan belongs to.
+Root `build.yml` is only for humans/agents.
+
+It owns:
+
+- the exact work-branch name;
+- selected model ids or `all`;
+- requested work tasks.
+
+If `build.yml.branch` does not equal the actual branch, the file is stale and
+a working build must refuse to run.
+
+`main` ignores `build.yml`.
+
+## Generated output
+
+All generated output belongs below root `build/`.
+
+Never write generated output into a model source directory.
 
 ## Models
 
@@ -89,34 +104,31 @@ A model root contains its own:
 - engine source such as `scpf/model.py`;
 - focused tests or verification when needed.
 
-Do not create a central Python catalog that needs to know every model.
+Do not create a central model catalog in Python.
 
-## Python
+## Python modules
 
-Prefer no repository Python outside model source unless a repository concern
-actually requires it.
+Repository Python follows the same ownership rule as models: small modules with
+one clear responsibility and focused tests.
 
-If Python is needed, use small independent modules with one responsibility and
-focused tests, for example:
+Current modules are deliberately separated:
 
-```text
-project/
-  build_config.py
-  branch_state.py
-tests/
-  test_build_config.py
-  test_branch_state.py
-```
+- `cad_project.config` — configuration parsing/validation;
+- `cad_project.models` — independent model discovery/selection;
+- `cad_project.forge` — Forge installation and one-model execution;
+- `cad_project.ci` — CI entrypoint using only `ci.yml`;
+- `cad_project.build` — developer/agent entrypoint using `build.yml`;
+- `cad_project.merge_policy` — branch-role and merge-method policy.
 
-Do not add a catch-all `scripts/ci/*.py` orchestration layer.
+Do not add a catch-all `scripts/ci/*.py` layer.
 
-Each module must be independently testable and reviewable in a small PR.
+A module should be independently changeable and verifiable by its own focused
+tests.
 
-## Ownership
+## External ownership
 
-- Forge authoring/compiler behavior belongs in `lib.py.solidcraft.forge`.
-- Generic CAD-CI behavior belongs in `lib.py.cad.ci` / `tool.cad.ci`.
-- This repository owns only project configuration and model source.
+Forge compiler/API behavior still belongs in `lib.py.solidcraft.forge`.
 
-Do not copy generic owner code into this template to work around an upstream
-gap.
+This template does **not** depend on shared CAD-CI or shared merge workflows.
+Do not move its normal repository execution back into `tool.cad.ci` or
+`lib.py.cad.ci`.

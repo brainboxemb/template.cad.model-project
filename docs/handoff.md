@@ -12,22 +12,19 @@ AGENTS.md and docs/plan.md.
 
 Repository rules:
 
-- main is stable;
-- dev is the single permanent development branch;
+- main is stable; dev is the single permanent development branch;
 - feature branches squash into dev;
-- dev -> main and main -> dev preserve history with merge commits;
-- root ci.yml is stable CI/project configuration;
-- root build.yml is human/agent work selection only and main ignores it;
+- dev -> main and main -> dev use merge commits;
+- the repository owns CI and merge policy locally; no shared reusable workflow;
+- workflow YAML stays thin and calls small local cad_project modules;
+- root ci.yml contains stable CI/build configuration including the exact Forge
+  version/commit;
+- root build.yml is human/agent work selection only;
+- build.yml.branch must match the actual work branch; main ignores build.yml;
 - generated output belongs below build/;
 - every models/<id>/ root is independent;
-- repository Python, when necessary, must be split into small independently
-  tested modules rather than one central scripts/CI layer;
-- GitHub Actions is orchestration-only and must never install/run Forge or
-  contain model build logic;
-- Forge version/commit belongs in root ci.yml;
-- generic Forge/CAD-CI behavior must be fixed in its owner repository, not
-  copied locally.
+- Python modules must remain small, separately tested and free of central model
+  catalog knowledge.
 
-Use docs/plan.md for unfinished work. Do not infer current priorities from this
-handoff.
+Use docs/plan.md for unfinished work.
 ~~~

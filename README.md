@@ -1,18 +1,24 @@
 # template.cad.model-project
 
-Minimal template for a CAD model project built around independent model roots.
-
-The template is intentionally small. It is the clean baseline for model
-repositories that need Forge authoring without inheriting product-specific CI,
-site or historical repository structure.
+Self-contained template for CAD model repositories with independent model roots.
 
 ## Repository shape
 
 ```text
 .github/workflows/
+  ci.yml
   merge-policy.yml
+cad_project/
+  config.py
+  models.py
+  forge.py
+  ci.py
+  build.py
+  merge_policy.py
+tests/
 AGENTS.md
 README.md
+pyproject.toml
 ci.yml
 build.yml
 docs/
@@ -34,38 +40,21 @@ Permanent source branches:
 - `main` — stable;
 - `dev` — integration/development.
 
-Merge rule:
+Short-lived branches squash into `dev`. `dev -> main` and `main -> dev`
+preserve history with merge commits.
 
-```text
-issue/* or feature/*
-        |
-        | squash
-        v
-       dev
-        |
-        | merge commit
-        v
-       main
-```
+## Configuration split
 
-Synchronization from `main` back to `dev` also preserves history with a
-merge commit.
+`ci.yml` is the stable project CI/build contract, including the exact Forge
+version and commit.
 
-## CI and working builds
+`build.yml` is the current human/agent work selection. Its `branch` value
+must match the actual work branch. `main` ignores it.
 
-Root `ci.yml` is the stable project/CI configuration. It contains exact
-project build dependencies, including the Forge version and commit.
+## Output
 
-`build.yml` is a human/agent work instruction. Shared CI does not read it.
-On `main` it is ignored.
-
-Repository workflows contain no model build implementation. Model execution
-must come from the released shared CAD-CI stack.
-
-Generated files go below `build/` and are never model source.
+Generated files go below root `build/`.
 
 ## First model
 
 `models/simple-box` is the smallest Forge proof: one parameterized native Box.
-
-See [docs/manual.md](docs/manual.md) for the exact local build command.
