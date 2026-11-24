@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from cad_model_merge_policy.__main__ import dispatch_ci
+from cad_model_merge_policy.__main__ import dispatch_workflow
 from cad_model_merge_policy.policy import MergePolicyError, merge_method
 
 
@@ -20,11 +20,22 @@ class MergePolicyTests(unittest.TestCase):
             merge_method(head="issue/10-change", base="main")
 
     @patch("cad_model_merge_policy.__main__.api")
-    def test_dispatch_ci_targets_local_ci_workflow_and_base_ref(self, api):
-        dispatch_ci("owner/repo", "dev", "token")
+    def test_dispatch_workflow_targets_local_workflow_and_base_ref(self, api):
+        dispatch_workflow("owner/repo", "ci.yml", "dev", "token")
         api.assert_called_once_with(
             "owner/repo",
             "actions/workflows/ci.yml/dispatches",
+            "token",
+            method="POST",
+            body={"ref": "dev"},
+        )
+
+    @patch("cad_model_merge_policy.__main__.api")
+    def test_cleanup_workflow_uses_same_target_ref(self, api):
+        dispatch_workflow("owner/repo", "branch-cleanup.yml", "dev", "token")
+        api.assert_called_once_with(
+            "owner/repo",
+            "actions/workflows/branch-cleanup.yml/dispatches",
             "token",
             method="POST",
             body={"ref": "dev"},

@@ -1,8 +1,11 @@
 schema: 1
-branch: issue/20-local-merge-smoke
+branch: issue/22-dispatch-cleanup
 
-modules: []
+modules:
+  - merge-policy
+
 models: []
 
 tasks:
   - test
+  - build
