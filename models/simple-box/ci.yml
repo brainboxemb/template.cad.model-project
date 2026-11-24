@@ -1,8 +1,4 @@
+schema: 1
 id: simple-box
 builder: forge
-process: true
-
-watch:
-  item:
-    - model.yml
-    - scpf/**
+source: scpf/model.py

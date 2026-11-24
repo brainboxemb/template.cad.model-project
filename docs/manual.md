@@ -11,73 +11,34 @@ dev
   -> squash merge
 ```
 
-Promote an accepted development checkpoint with a pull request:
-
-```text
-dev -> main
-```
-
-That integration uses a merge commit.
-
-Synchronize stable history back with:
-
-```text
-main -> dev
-```
-
-That also uses a merge commit.
+Promote accepted development with `dev -> main`; synchronize with
+`main -> dev`. Both permanent-branch integrations use merge commits.
 
 ## ci.yml
 
-Root `ci.yml` describes the stable project/CI item set.
-
-It does not describe what an agent happens to be working on today.
-
-Each model owns its own item configuration at:
-
-```text
-models/<id>/ci.yml
-```
-
-## build.yml
-
-Root `build.yml` is for humans/agents.
-
-Example one-model work:
+Root `ci.yml` is the stable CI/build contract:
 
 ```yaml
 schema: 1
-branch: dev
+
+dependencies:
+  forge:
+    repository: brainboxemb/lib.py.solidcraft.forge
+    version: 0.13.2
+    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
 
 models:
-  - simple-box
+  root: models
 
-tasks:
-  - build
+output:
+  root: build
 ```
 
-Example future all-model work:
-
-```yaml
-schema: 1
-branch: dev
-
-models: all
-
-tasks:
-  - build
-```
-
-Normal GitHub CI never reads `build.yml`.
-`main` ignores it.
-
-A feature branch may update its model/task selection before work starts. Keep
-`branch: dev` because the plan belongs to the single permanent development
-line.
+CI reads this file. Workflow YAML does not repeat these values.
 
 ## Model roots
 
-A model is independent:
+Every direct child below `models/` with a `ci.yml` is independent.
 
 ```text
 models/simple-box/
@@ -86,40 +47,68 @@ models/simple-box/
   scpf/model.py
 ```
 
-Adding or changing another model should not require editing
-`models/simple-box`.
+Minimal model CI config:
 
-## Local Forge build
-
-Stage 1 uses Forge v0.13.2 at exact commit:
-
-```text
-ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
+```yaml
+schema: 1
+id: simple-box
+builder: forge
+source: scpf/model.py
 ```
 
-Create a virtual environment and install exactly that package:
+## build.yml
+
+`build.yml` is for humans/agents, not CI.
+
+On a work branch:
+
+```yaml
+schema: 1
+branch: issue/12-change-box
+
+models:
+  - simple-box
+
+tasks:
+  - build
+```
+
+For all models use `models: all`.
+
+When a new branch is created, update `branch` immediately. A mismatch is a
+stale work plan and `python -m cad_project.build` refuses to run.
+
+On `main`, `build.yml` is ignored.
+
+## Commands
+
+Install the local project package:
 
 ```bash
-python -m venv .venv
-. .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install "git+https://github.com/brainboxemb/lib.py.solidcraft.forge.git@ea5710a5d2d33b0633b93c5da95dd5b74f126aa4#subdirectory=scpf"
+python -m pip install -e .
 ```
 
-Build the example:
+Run module tests:
 
 ```bash
-mkdir -p build/models/simple-box
-python -m scpf models/simple-box/scpf/model.py \
-  --out build/models/simple-box/solidcraft.json
+python -m unittest discover -s tests -v
 ```
 
-The output is generated work and stays below ignored `build/`.
+Run normal repository CI locally:
 
-## Python modules
+```bash
+python -m cad_project.ci
+```
 
-Do not create repository Python merely to wrap a shell command.
+Run the current developer/agent selection:
 
-When Python is genuinely required, create one small module per responsibility
-and a matching focused test module. Do not create one Python file that owns the
-whole repository or knows every model.
+```bash
+python -m cad_project.build
+```
+
+Both build paths write generated output below `build/`.
+
+## Python structure
+
+Keep modules small and independently tested. Do not replace them with one large
+CI script or place model-specific knowledge into generic modules.
