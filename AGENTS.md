@@ -20,24 +20,29 @@ Before changing anything:
 
 ## Branch model
 
-Permanent source branches:
+Permanent source branches are only `main` and `dev`.
 
-- `main` — stable;
-- `dev` — development/integration.
-
-Required merge behavior:
+Required integration:
 
 - short-lived branch -> `dev`: squash;
 - `dev` -> `main`: merge commit;
 - `main` -> `dev`: merge commit.
 
-Feature branches never merge directly to `main`.
+Temporary branches use only configured prefixes from root `ci.yml`.
+
+After a successful same-repository short-lived PR is merged into `dev`, its
+source branch is removed by `modules/branch-cleanup`.
+
+A standalone cleanup sweep may remove old temporary branches only when there is
+no open PR and a merged PR proves integration into `dev`.
+
+`main` and `dev` are never cleanup candidates.
 
 ## ci.yml and build.yml
 
 Root `ci.yml` is stable repository configuration. It owns:
 
-- permanent branch names;
+- permanent branch names and temporary branch prefixes;
 - exact Forge repository/version/commit;
 - module root;
 - model root;
@@ -45,21 +50,15 @@ Root `ci.yml` is stable repository configuration. It owns:
 
 Root `build.yml` is branch-specific execution selection.
 
-On a non-main branch it must contain:
-
-- the exact current branch name;
-- selected modules or `all`;
-- selected models or `all`;
-- tasks such as `test` and `build`.
-
-If `build.yml.branch` does not match the actual branch, CI must fail as stale.
+On a non-main branch it must contain the exact current branch name, selected
+modules/models and tasks. A mismatch is stale and CI fails.
 
 On `main`, `build.yml` is ignored and the complete repository is
 tested/built.
 
 ## Python modules
 
-Every Python capability is a standalone item below:
+Every Python capability is a standalone item:
 
 ```text
 modules/<id>/
@@ -74,54 +73,37 @@ are not allowed.
 
 Current modules:
 
-- `modules/ci` — project config, item discovery, branch selection and
-  orchestration;
+- `modules/ci` — configuration, selection and orchestration;
 - `modules/build` — model build execution;
-- `modules/merge-policy` — branch integration policy.
+- `modules/merge-policy` — branch integration/merge method;
+- `modules/branch-cleanup` — safe temporary branch cleanup.
 
-A PR that changes one module should select that one module in `build.yml` so
-only that module is built/tested.
-
-Do not create a repository-wide Python package or root `tests/` directory.
+A PR changing one module selects only that module in `build.yml`.
 
 ## Models
 
-Every CAD model is a standalone item below:
-
-```text
-models/<id>/
-  ci.yml
-  model.yml
-  <engine source>
-  <model-owned verification when needed>
-```
+Every CAD model is a standalone item under `models/<id>/` with its own config,
+metadata, engine source and model-owned verification when needed.
 
 Do not create a central model catalog in Python.
 
 ## Workflows
 
-Workflow YAML stays thin.
+Workflow YAML stays thin and bootstraps only its owning module.
 
-`.github/workflows/ci.yml` may bootstrap only `modules/ci` and invoke it.
-It must not name Forge, models or build output paths.
-
-`.github/workflows/merge-policy.yml` may bootstrap only
-`modules/merge-policy` and invoke it.
+- CI workflow -> `modules/ci`;
+- merge workflow -> `modules/merge-policy`;
+- branch cleanup workflow -> `modules/branch-cleanup`.
 
 ## build.yml merge ownership
 
-`build.yml` is branch-local state.
-
-When a short-lived branch is squashed into `dev`, or permanent branches are
-integrated, the target branch must retain/receive its own valid `build.yml`
-rather than inheriting a stale source-branch name.
-
-This normalization belongs to `modules/merge-policy`, not to CI or model code.
+`build.yml` is branch-local state. Target-branch preservation during
+integration belongs to `modules/merge-policy`, not CI, build or cleanup.
 
 ## External ownership
 
 Forge compiler/API behavior remains owned by
 `lib.py.solidcraft.forge`.
 
-Normal project CI/build/merge behavior for repositories created from this
-template is local to the repository; it does not use shared CAD-CI workflows.
+Normal repository CI/build/merge/cleanup behavior is local to repositories
+created from this template.
