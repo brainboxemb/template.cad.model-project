@@ -25,8 +25,12 @@ Permanent source branches are only `main` and `dev`.
 Required integration:
 
 - short-lived branch -> `dev`: squash;
-- `dev` -> `main`: merge commit;
-- `main` -> `dev`: merge commit.
+- `dev` -> `main`: merge commit when promoting accepted development;
+- `main` -> `dev`: merge commit only when `main` contains actual content
+  that is not already present on `dev`, for example a stable-branch hotfix.
+
+Do not create a `main` -> `dev` PR merely to copy the promotion merge
+commit back into `dev`.
 
 Temporary branches use only configured prefixes from root `ci.yml`.
 

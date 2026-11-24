@@ -1,9 +1,7 @@
 schema: 1
-branch: issue/28-ci-check-gate
+branch: docs/29-main-dev-sync-policy
 
-modules:
-  - merge-policy
-
+modules: []
 models: []
 
 tasks:
