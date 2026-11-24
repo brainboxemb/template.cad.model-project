@@ -4,20 +4,10 @@ This file contains unfinished work only.
 
 ## Now
 
-### #62 — restore CAD catalog presentation
+### #69 — verify Pages PRs against the matching durable build scope
 
-Restore the accepted CAD presentation contract on top of the self-contained
-template architecture: Git-derived recently updated models on the landing page,
-Models / Basic / Components / Advanced navigation, category routes and the
-grouped model catalog. Keep model/build ownership unchanged.
-
-
-### #48 — restore `gh-pages` publication
-
-Keep Pages separate and asynchronously dispatched after build publication, but
-publish the combined stable `/` and development `/dev/` site to the generated
-`gh-pages` branch. Do not use `actions/deploy-pages` or a `github-pages`
-environment.
+Use dev evidence for development-target PRs and dev-to-main promotions.
+Keep model-only migration validation in CAD CI and Pages publication unchanged.
 
 ## Accepted architecture
 
@@ -38,6 +28,5 @@ environment.
 
 ## Next
 
-After #48 is accepted, treat this template as the v1 baseline and start
-migrating real CAD models. Add explicit model dependencies only when the first
+Use the accepted template baseline for the real CAD model migration. Add explicit model dependencies only when the first
 advanced/assembly migration supplies a concrete dependency case.

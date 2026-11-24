@@ -77,6 +77,15 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-mft", workflow)
         self.assertIn("fetch-depth: 0", workflow)
 
+    def test_pages_pr_verifies_matching_durable_scope(self):
+        workflow = (ROOT / ".github/workflows/pages.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("github.base_ref == 'dev' || github.head_ref == 'dev'", workflow)
+        self.assertIn("--build-scope prepared-build/$PAGES_SCOPE", workflow)
+        self.assertNotIn('"models/**/model.yml"', workflow)
+        self.assertNotIn('"models/**/page.md"', workflow)
+
     def test_pages_publish_jobs_run_only_from_explicit_dispatch(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
