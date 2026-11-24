@@ -11,7 +11,7 @@ dev
   -> squash merge
 ```
 
-Promote an accepted development checkpoint with a pull request:
+Promote an accepted development checkpoint:
 
 ```text
 dev -> main
@@ -29,11 +29,27 @@ That also uses a merge commit.
 
 ## ci.yml
 
-Root `ci.yml` describes the stable project/CI item set.
+Root `ci.yml` is the stable project/CI contract.
 
-It does not describe what an agent happens to be working on today.
+It owns repository-wide build dependencies and item discovery. Forge is pinned
+there by semantic version and exact commit:
 
-Each model owns its own item configuration at:
+```yaml
+schema: 1
+
+dependencies:
+  forge:
+    repository: brainboxemb/lib.py.solidcraft.forge
+    version: 0.13.2
+    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
+
+items:
+  - models/*
+```
+
+Do not move dependency pins into GitHub Actions.
+
+Each model owns its local item configuration at:
 
 ```text
 models/<id>/ci.yml
@@ -41,7 +57,7 @@ models/<id>/ci.yml
 
 ## build.yml
 
-Root `build.yml` is for humans/agents.
+Root `build.yml` is for humans/agents only.
 
 Example one-model work:
 
@@ -56,7 +72,7 @@ tasks:
   - build
 ```
 
-Example future all-model work:
+Example all-model work:
 
 ```yaml
 schema: 1
@@ -68,12 +84,8 @@ tasks:
   - build
 ```
 
-Normal GitHub CI never reads `build.yml`.
+Normal CI never reads `build.yml`.
 `main` ignores it.
-
-A feature branch may update its model/task selection before work starts. Keep
-`branch: dev` because the plan belongs to the single permanent development
-line.
 
 ## Model roots
 
@@ -89,32 +101,27 @@ models/simple-box/
 Adding or changing another model should not require editing
 `models/simple-box`.
 
-## Local Forge build
+## Generated output
 
-Stage 1 uses Forge v0.13.2 at exact commit:
+All generated model output belongs below:
 
 ```text
-ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
+build/
 ```
 
-Create a virtual environment and install exactly that package:
+The directory is ignored and is never model source.
 
-```bash
-python -m venv .venv
-. .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install "git+https://github.com/brainboxemb/lib.py.solidcraft.forge.git@ea5710a5d2d33b0633b93c5da95dd5b74f126aa4#subdirectory=scpf"
-```
+## CI implementation boundary
 
-Build the example:
+Repository GitHub Actions must not install Forge or execute models directly.
 
-```bash
-mkdir -p build/models/simple-box
-python -m scpf models/simple-box/scpf/model.py \
-  --out build/models/simple-box/solidcraft.json
-```
+The repository declares **what** exists in `ci.yml` and model-local
+`ci.yml`. The released shared CAD-CI stack owns **how** those models are
+selected, built and verified.
 
-The output is generated work and stays below ignored `build/`.
+If the shared stack cannot yet consume the declared contract, leave CI blocked
+and fix the owning shared layer. Do not add a local Python/shell/workflow
+implementation.
 
 ## Python modules
 
