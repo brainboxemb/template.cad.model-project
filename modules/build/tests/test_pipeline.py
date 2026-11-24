@@ -12,6 +12,7 @@ class PipelineTests(unittest.TestCase):
         return ProjectConfig(
             stable_branch="main",
             development_branch="dev",
+            build_branch="build",
             forge=ForgePin("brainboxemb/lib.py.solidcraft.forge", "0.14.0", "a" * 40),
             solidcraft=SolidCraftPin(
                 "ghcr.io/brainboxemb/cad-solidcraft:v0.3.5",
