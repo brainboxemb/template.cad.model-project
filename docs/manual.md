@@ -45,6 +45,10 @@ Agents must never call GitHub's direct merge API, enable auto-merge, use the UI
 merge button as a fallback, or manually choose squash/merge/rebase. If the
 `/merge` path fails, fix that path instead of bypassing it.
 
+Repeating `/merge` after the pull request has already been merged is an
+idempotent successful no-op. A pull request that is closed without being merged
+is still rejected.
+
 The merge-policy owns:
 
 - short-lived branch -> `dev`: squash;
