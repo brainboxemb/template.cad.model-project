@@ -10,7 +10,6 @@ site or historical repository structure.
 
 ```text
 .github/workflows/
-  ci.yml
   merge-policy.yml
 AGENTS.md
 README.md
@@ -54,10 +53,14 @@ merge commit.
 
 ## CI and working builds
 
-`ci.yml` is the stable project/CI configuration.
+Root `ci.yml` is the stable project/CI configuration. It contains exact
+project build dependencies, including the Forge version and commit.
 
-`build.yml` is a human/agent work instruction. Normal CI does not read it.
+`build.yml` is a human/agent work instruction. Shared CI does not read it.
 On `main` it is ignored.
+
+Repository workflows contain no model build implementation. Model execution
+must come from the released shared CAD-CI stack.
 
 Generated files go below `build/` and are never model source.
 
