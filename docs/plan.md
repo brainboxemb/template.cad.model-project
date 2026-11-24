@@ -4,6 +4,14 @@ This file contains unfinished work only.
 
 ## Now
 
+### #62 — restore CAD catalog presentation
+
+Restore the accepted CAD presentation contract on top of the self-contained
+template architecture: Git-derived recently updated models on the landing page,
+Models / Basic / Components / Advanced navigation, category routes and the
+grouped model catalog. Keep model/build ownership unchanged.
+
+
 ### #48 — restore `gh-pages` publication
 
 Keep Pages separate and asynchronously dispatched after build publication, but

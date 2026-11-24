@@ -1,9 +1,11 @@
 schema: 1
-branch: fix/48-gh-pages-ci-contract
+branch: feature/62-catalog-navigation
 
 modules:
-  - ci
-models: []
+  - pages
+models:
+  - simple-box
 
 tasks:
   - test
+  - build
