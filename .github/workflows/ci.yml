@@ -41,7 +41,7 @@ jobs:
 
   build:
     name: build
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
     runs-on: ubuntu-latest
     permissions:
       contents: write

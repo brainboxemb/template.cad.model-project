@@ -16,7 +16,10 @@ class WorkflowBoundaryTests(unittest.TestCase):
         text = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
         self.assertIn("if: github.event_name == 'pull_request'", text)
         self.assertIn("contents: read", text)
-        self.assertIn("if: github.event_name != 'pull_request'", text)
+        self.assertIn(
+            "if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')",
+            text,
+        )
         self.assertIn("contents: write", text)
         self.assertIn("python -m cad_model_build.publish", text)
         self.assertIn("PYTHONPATH: modules/build/src", text)
@@ -27,12 +30,20 @@ class WorkflowBoundaryTests(unittest.TestCase):
     def test_pages_are_dispatched_after_build_without_blocking_ci(self):
         ci = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
         pages = Path(".github/workflows/pages.yml").read_text(encoding="utf-8")
+        self.assertIn("push:\n    branches: [dev, main]", ci)
+        self.assertIn(
+            "if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')",
+            ci,
+        )
         self.assertIn("actions: write", ci)
         self.assertIn("gh workflow run pages.yml --ref main", ci)
         self.assertIn("workflow_dispatch:", pages)
         self.assertNotIn("workflow_run:", pages)
         self.assertIn("peaceiris/actions-hugo@v3", pages)
-        self.assertIn("actions/deploy-pages@v5", pages)
+        self.assertIn("python -m cad_model_pages.publish", pages)
+        self.assertIn("--repo source-main", pages)
+        self.assertNotIn("actions/deploy-pages", pages)
+        self.assertNotIn("github-pages", pages)
 
     def test_workflow_actions_use_readable_release_tags(self):
         for path in Path(".github/workflows").glob("*.yml"):
