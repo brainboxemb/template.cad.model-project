@@ -60,16 +60,15 @@ def resolve_plan(
                     "stl": f"{target}/model.stl"
                     if "stl" in model.artifacts
                     else None,
-                    "extra_png": [
-                        {
-                            "name": item.name,
-                            "path": f"{target}/{item.name}",
-                            "camera": item.camera,
-                        }
-                        for item in model.snapshot.extra
-                    ],
                 },
-                "snapshot_camera": model.snapshot.camera,
+                "snapshots": [
+                    {
+                        "name": item.name,
+                        "path": f"{target}/{item.name}",
+                        "camera": item.camera,
+                    }
+                    for item in model.snapshots
+                ],
                 "artifacts": list(model.artifacts),
             }
         )

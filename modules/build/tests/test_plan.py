@@ -7,7 +7,6 @@ from cad_model_build.config import (
     ForgePin,
     ModelConfig,
     ProjectConfig,
-    SnapshotConfig,
     SnapshotSpec,
     SolidCraftPin,
 )
@@ -30,7 +29,7 @@ class BuildPlanTests(unittest.TestCase):
         )
 
     @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
-    def test_plan_resolves_native_outputs_and_optional_stl(self, _source_sha):
+    def test_plan_resolves_native_outputs_optional_stl_and_snapshots(self, _source_sha):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             root = repo / "models" / "box"
@@ -39,10 +38,7 @@ class BuildPlanTests(unittest.TestCase):
                 root=root,
                 source=Path("scpf/model.py"),
                 artifacts=("stl",),
-                snapshot=SnapshotConfig(
-                    camera={"distance": 80},
-                    extra=(SnapshotSpec("top.png", {"pitch": -1.55}),),
-                ),
+                snapshots=(SnapshotSpec("top.png", {"pitch": -1.55}),),
             )
             plan = resolve_plan(
                 repo=repo,
@@ -51,18 +47,18 @@ class BuildPlanTests(unittest.TestCase):
                 selected_ids=("box",),
                 namespace="dev",
             )
+            row = plan["models"][0]
             self.assertEqual(plan["namespace"], "dev")
             self.assertEqual(plan["source_sha"], "b" * 40)
-            self.assertEqual(plan["models"][0]["built_source_sha"], "b" * 40)
-            self.assertEqual(plan["models"][0]["commands"], "models/box/solidcraft.json")
-            self.assertEqual(plan["models"][0]["native"]["sc"], "models/box/model.sc")
-            self.assertEqual(plan["models"][0]["native"]["step"], "models/box/model.step")
-            self.assertEqual(plan["models"][0]["native"]["png"], "models/box/model.png")
-            self.assertEqual(plan["models"][0]["native"]["stl"], "models/box/model.stl")
-            self.assertEqual(
-                plan["models"][0]["native"]["extra_png"][0]["path"],
-                "models/box/top.png",
-            )
+            self.assertEqual(row["built_source_sha"], "b" * 40)
+            self.assertEqual(row["commands"], "models/box/solidcraft.json")
+            self.assertEqual(row["native"]["sc"], "models/box/model.sc")
+            self.assertEqual(row["native"]["step"], "models/box/model.step")
+            self.assertEqual(row["native"]["png"], "models/box/model.png")
+            self.assertEqual(row["native"]["stl"], "models/box/model.stl")
+            self.assertEqual(row["snapshots"][0]["path"], "models/box/top.png")
+            self.assertNotIn("snapshot_camera", row)
+            self.assertNotIn("extra_png", row["native"])
 
     @patch("cad_model_build.plan.source_sha", return_value="b" * 40)
     def test_main_is_a_valid_output_namespace(self, _source_sha):

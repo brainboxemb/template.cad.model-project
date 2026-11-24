@@ -40,14 +40,10 @@ id: box
 builder: forge
 source: scpf/model.py
 artifacts: [stl]
-snapshot:
-  camera:
-    target: [0, 0, 5]
-    distance: 80
-  extra:
-    - name: top.png
-      camera:
-        pitch: -1.55
+snapshots:
+  - name: top.png
+    camera:
+      pitch: -1.55
 """,
                 encoding="utf-8",
             )
@@ -58,8 +54,22 @@ snapshot:
             self.assertEqual(len(models), 1)
             self.assertEqual(models[0].id, "box")
             self.assertEqual(models[0].artifacts, ("stl",))
-            self.assertEqual(models[0].snapshot.extra[0].name, "top.png")
+            self.assertEqual(models[0].snapshots[0].name, "top.png")
             self.assertEqual(models[0].root, model)
+
+    def test_snapshots_are_optional(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "ci.yml").write_text(PROJECT, encoding="utf-8")
+            model = repo / "models" / "box"
+            (model / "scpf").mkdir(parents=True)
+            (model / "scpf/model.py").write_text("object()\n", encoding="utf-8")
+            (model / "ci.yml").write_text(
+                "schema: 1\nid: box\nbuilder: forge\nsource: scpf/model.py\n",
+                encoding="utf-8",
+            )
+            models = discover_models(repo, load_project(repo))
+            self.assertEqual(models[0].snapshots, ())
 
     def test_process_false_model_is_not_discovered(self):
         with tempfile.TemporaryDirectory() as tmp:

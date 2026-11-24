@@ -101,7 +101,34 @@ Root `ci.yml` pins the complete qualified CAD toolchain:
 - released SolidCraft runtime image and exact SolidCraft version.
 
 Model-local `ci.yml` owns build execution. A minimal processed model declares
-its id, Forge source and optional build extras such as STL or snapshot framing.
+its id and Forge source. The primary `model.png` is always produced with the
+normal SolidCraft snapshot view and therefore needs no model configuration.
+
+Only optional build extras belong in the model config, for example STL or
+additional named snapshots:
+
+```yaml
+schema: 1
+id: simple-box
+builder: forge
+source: scpf/model.py
+process: true
+
+artifacts:
+  - stl
+
+snapshots:
+  - name: top.png
+    camera:
+      target: [0, 0, 5]
+      yaw: 0
+      pitch: -1.55
+      distance: 90
+      fov: 0
+```
+
+If `snapshots` is omitted, only the standard `model.png` is rendered.
+Additional snapshots may provide their own camera.
 
 CI selects physical model ids. The build module then performs one repository
 scan and writes a deterministic `build-plan.json`.
