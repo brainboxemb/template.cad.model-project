@@ -1,9 +1,11 @@
 schema: 1
-branch: docs/mandatory-local-merge
+branch: fix/forge-0.15-baseline
 
 modules:
-  - merge-policy
-models: []
+  - build
+models:
+  - simple-box
 
 tasks:
   - test
+  - build
