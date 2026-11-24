@@ -12,6 +12,7 @@ branches:
 
 generated:
   build_branch: build
+  pages_branch: gh-pages
 
 dependencies:
   forge:

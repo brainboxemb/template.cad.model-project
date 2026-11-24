@@ -1,12 +1,10 @@
 schema: 1
-branch: issue/44-model-variants
+branch: fix/48-generic-pages-verification
 
 modules:
   - ci
-  - build
-models:
-  - simple-box
+  - pages
+models: []
 
 tasks:
   - test
-  - build
