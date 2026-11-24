@@ -4,22 +4,22 @@ This file contains unfinished work only.
 
 ## Now
 
-### #78 — keep generated CAD artifacts only on the build branch
+### #81 — make local /merge mandatory for agents
 
-Remove the accidental duplication of generated CAD output into `gh-pages`.
+The repository-local merge policy exists specifically to prevent agents from
+choosing the wrong merge method.
 
-Pages may inspect the durable build plan and command JSON while rendering, but
-must link generated output directly from:
+For every source-branch integration, agents must use a PR conversation comment:
 
 ```text
-build/<scope>/models/<variant>/...
+/merge
 ```
 
-The model page uses build-plan paths for command JSON, PNG, SC, STEP, optional
-STL and named snapshots. Stable and development Pages resolve `main` and
-`dev` build scopes independently.
+The merge-policy workflow remains the sole owner of merge-method selection.
 
-Source-owned presentation content may remain normal Hugo page resources.
+Direct GitHub merge API calls, auto-merge and UI/manual merge fallback are
+forbidden for agents. A failed merge-policy run must be repaired, never
+bypassed.
 
 ## Accepted architecture
 
@@ -30,7 +30,7 @@ Source-owned presentation content may remain normal Hugo page resources.
 - item-local impact/watch metadata;
 - directory-local model build priority;
 - explicit physical-model dependency graph for assembly impact;
-- local merge-policy dispatches target CI and branch cleanup;
+- local merge-policy owns all source-branch integration and dispatches target CI;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;
 - Forge v0.14.0 / SolidCraft 0.48.1 baseline;
@@ -42,5 +42,6 @@ Source-owned presentation content may remain normal Hugo page resources.
 
 ## Next
 
-After #78 is accepted on `main`, sync the Pages fix to the active CAD
-migration repository and continue the final six-root migration.
+Accept #81 through the local `/merge` path itself, then promote it to
+`main` through the same policy. Sync the agent rule to the active CAD
+migration repository.
