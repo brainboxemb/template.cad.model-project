@@ -61,6 +61,15 @@ def _selection(repo, project, branch, modules, models):
     return load_build(repo, branch) or full_selection(branch)
 
 
+def _output_namespace(project, branch: str) -> str:
+    base = os.environ.get("GITHUB_BASE_REF", "").strip()
+    if base in {project.stable_branch, project.development_branch}:
+        return base
+    if branch in {project.stable_branch, project.development_branch}:
+        return branch
+    return project.development_branch
+
+
 def main() -> None:
     repo = Path.cwd()
     project = load_project(repo)
@@ -74,6 +83,7 @@ def main() -> None:
         repo=repo,
         project=project,
         selection=selection,
+        namespace=_output_namespace(project, branch),
         modules=select(modules, selection.modules),
         models=select(models, selection.models),
     )
