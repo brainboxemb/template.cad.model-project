@@ -21,19 +21,19 @@ class PagesBuildTests(unittest.TestCase):
             self.assertEqual(staged, scope.resolve())
             self.assertTrue((staged / "build-plan.json").is_file())
 
-    def test_stages_any_durable_scope_at_site_mount_path(self):
+    def test_stages_any_build_scope_at_site_mount_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "source"
-            durable = root / "durable-dev"
+            build_scope = root / "build-dev"
             source.mkdir()
-            durable.mkdir()
-            (durable / "build-plan.json").write_text(
+            build_scope.mkdir()
+            (build_scope / "build-plan.json").write_text(
                 '{"schema": 1}',
                 encoding="utf-8",
             )
 
-            staged = _stage_build_scope(source, durable)
+            staged = _stage_build_scope(source, build_scope)
 
             self.assertEqual(staged, source / "prepared-build/main")
             self.assertEqual(
