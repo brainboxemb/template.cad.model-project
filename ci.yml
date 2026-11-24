@@ -1,7 +1,13 @@
 schema: 1
 
-# Stable repository CI configuration.
-# build.yml is deliberately separate and is never a CI input.
+dependencies:
+  forge:
+    repository: brainboxemb/lib.py.solidcraft.forge
+    version: 0.13.2
+    commit: ea5710a5d2d33b0633b93c5da95dd5b74f126aa4
 
-items:
-  - models/*
+models:
+  root: models
+
+output:
+  root: build

@@ -1,8 +1,6 @@
 schema: 1
 
-# This work selection belongs to the single permanent development line.
-# main ignores this file.
-branch: dev
+branch: fix/7-remove-local-ci
 
 models:
   - simple-box
