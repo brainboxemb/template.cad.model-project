@@ -4,10 +4,25 @@ This file contains unfinished work only.
 
 ## Now
 
-### #69 — verify Pages PRs against the matching durable build scope
+### #72 — support a model-owned primary snapshot camera
 
-Use dev evidence for development-target PRs and dev-to-main promotions.
-Keep model-only migration validation in CAD CI and Pages publication unchanged.
+Extend the generic model-build contract so a physical model can optionally own
+the camera used for its primary `model.png`.
+
+The contract is:
+
+```yaml
+snapshot:
+  camera:
+    target: [0, 0, 160]
+    yaw: -0.24
+    pitch: 0.20
+    distance: 920
+    fov: 0
+```
+
+Omitting `snapshot` preserves the existing SolidCraft default camera.
+Additional named `snapshots:` remain independent.
 
 ## Accepted architecture
 
@@ -28,5 +43,5 @@ Keep model-only migration validation in CAD CI and Pages publication unchanged.
 
 ## Next
 
-Use the accepted template baseline for the real CAD model migration. Add explicit model dependencies only when the first
-advanced/assembly migration supplies a concrete dependency case.
+After #72 is accepted on `main`, sync the build-module change to the active
+CAD migration repository and continue the final six-root migration batch.
