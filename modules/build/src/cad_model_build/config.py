@@ -42,10 +42,16 @@ class SnapshotSpec:
 
 
 @dataclass(frozen=True)
+class ModelVariant:
+    id: str
+    source: Path
+
+
+@dataclass(frozen=True)
 class ModelConfig:
     id: str
     root: Path
-    source: Path
+    variants: tuple[ModelVariant, ...]
     artifacts: tuple[str, ...]
     snapshots: tuple[SnapshotSpec, ...]
 
@@ -133,6 +139,76 @@ def _snapshots(data: dict[str, Any], path: Path) -> tuple[SnapshotSpec, ...]:
     return tuple(result)
 
 
+def _source_variant(
+    *,
+    owner_id: str,
+    model_root: Path,
+    data: dict[str, Any],
+    path: Path,
+) -> tuple[ModelVariant, ...]:
+    source = _relative(data.get("source"), "source", path)
+    if not (model_root / source).is_file():
+        raise BuildConfigError(f"model source does not exist: {model_root / source}")
+    return (ModelVariant(owner_id, source),)
+
+
+def _variant_list(
+    *,
+    model_root: Path,
+    data: dict[str, Any],
+    path: Path,
+) -> tuple[ModelVariant, ...]:
+    raw = data.get("variants")
+    if not isinstance(raw, list) or not raw:
+        raise BuildConfigError(f"variants must be a non-empty list: {path}")
+
+    result: list[ModelVariant] = []
+    local_ids: set[str] = set()
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict) or set(item) != {"id", "source"}:
+            raise BuildConfigError(
+                f"variants[{index}] must contain only id and source: {path}"
+            )
+        variant_id = item.get("id")
+        if not isinstance(variant_id, str) or not _ID.fullmatch(variant_id):
+            raise BuildConfigError(f"invalid variant id: {path}")
+        if variant_id in local_ids:
+            raise BuildConfigError(f"duplicate variant id {variant_id!r}: {path}")
+        local_ids.add(variant_id)
+
+        source = _relative(item.get("source"), f"variants[{index}].source", path)
+        if not (model_root / source).is_file():
+            raise BuildConfigError(
+                f"variant source does not exist: {model_root / source}"
+            )
+        result.append(ModelVariant(variant_id, source))
+
+    return tuple(result)
+
+
+def _variants(
+    *,
+    owner_id: str,
+    model_root: Path,
+    data: dict[str, Any],
+    path: Path,
+) -> tuple[ModelVariant, ...]:
+    has_source = "source" in data
+    has_variants = "variants" in data
+    if has_source == has_variants:
+        raise BuildConfigError(
+            f"exactly one of source or variants is required: {path}"
+        )
+    if has_source:
+        return _source_variant(
+            owner_id=owner_id,
+            model_root=model_root,
+            data=data,
+            path=path,
+        )
+    return _variant_list(model_root=model_root, data=data, path=path)
+
+
 def load_project(repo: Path) -> ProjectConfig:
     path = repo / "ci.yml"
     data = _mapping(path)
@@ -200,7 +276,8 @@ def load_project(repo: Path) -> ProjectConfig:
 def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ...]:
     root = repo / project.models_root
     result: list[ModelConfig] = []
-    seen: set[str] = set()
+    owner_ids: set[str] = set()
+    variant_ids: set[str] = set()
 
     for path in sorted(root.rglob("ci.yml")):
         data = _mapping(path)
@@ -212,19 +289,28 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ..
         if not process:
             continue
 
-        model_id = data.get("id")
-        if not isinstance(model_id, str) or not _ID.fullmatch(model_id):
+        owner_id = data.get("id")
+        if not isinstance(owner_id, str) or not _ID.fullmatch(owner_id):
             raise BuildConfigError(f"invalid model id: {path}")
-        if model_id in seen:
-            raise BuildConfigError(f"duplicate model id {model_id!r}: {path}")
-        seen.add(model_id)
+        if owner_id in owner_ids:
+            raise BuildConfigError(f"duplicate model owner id {owner_id!r}: {path}")
+        owner_ids.add(owner_id)
 
         if data.get("builder") != "forge":
             raise BuildConfigError(f"model builder must be forge: {path}")
-        source = _relative(data.get("source"), "source", path)
         model_root = path.parent
-        if not (model_root / source).is_file():
-            raise BuildConfigError(f"model source does not exist: {model_root / source}")
+        variants = _variants(
+            owner_id=owner_id,
+            model_root=model_root,
+            data=data,
+            path=path,
+        )
+        for variant in variants:
+            if variant.id in variant_ids:
+                raise BuildConfigError(
+                    f"duplicate build variant id {variant.id!r}: {path}"
+                )
+            variant_ids.add(variant.id)
 
         artifacts = data.get("artifacts", [])
         if artifacts is None:
@@ -243,12 +329,20 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ..
 
         result.append(
             ModelConfig(
-                id=model_id,
+                id=owner_id,
                 root=model_root,
-                source=source,
+                variants=variants,
                 artifacts=tuple(artifacts),
                 snapshots=_snapshots(data, path),
             )
         )
 
     return tuple(result)
+
+
+def active_variant_ids(models: tuple[ModelConfig, ...]) -> set[str]:
+    return {
+        variant.id
+        for model in models
+        for variant in model.variants
+    }

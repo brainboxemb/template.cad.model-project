@@ -1,4 +1,4 @@
-"""Discover independently owned Python modules and CAD models."""
+"""Discover independently owned Python modules and CAD model owners."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ class CadModel:
     id: str
     root: Path
     builder: str
-    source: Path
+    source: Path | None = None
     watch: tuple[str, ...] = ()
 
 
@@ -66,6 +66,48 @@ def _watch(
     ):
         raise ConfigError(f"watch must be a string list: {path}")
     return (default, *extra)
+
+
+def _source_path(value: object, *, field: str, path: Path) -> Path:
+    if not isinstance(value, str) or not value:
+        raise ConfigError(f"{field} must be a string: {path}")
+    result = Path(value)
+    if result.is_absolute() or ".." in result.parts:
+        raise ConfigError(f"{field} must remain inside model root: {path}")
+    return result
+
+
+def _validate_model_sources(child: Path, data: dict[str, Any], path: Path) -> Path | None:
+    has_source = "source" in data
+    has_variants = "variants" in data
+    if has_source == has_variants:
+        raise ConfigError(f"exactly one of source or variants is required: {path}")
+
+    if has_source:
+        source = _source_path(data.get("source"), field="model source", path=path)
+        if not (child / source).is_file():
+            raise ConfigError(f"model source does not exist: {child / source}")
+        return source
+
+    variants = data.get("variants")
+    if not isinstance(variants, list) or not variants:
+        raise ConfigError(f"variants must be a non-empty list: {path}")
+    for index, item in enumerate(variants):
+        if not isinstance(item, dict) or set(item) != {"id", "source"}:
+            raise ConfigError(
+                f"variants[{index}] must contain only id and source: {path}"
+            )
+        variant_id = item.get("id")
+        if not isinstance(variant_id, str) or not _ID.fullmatch(variant_id):
+            raise ConfigError(f"invalid variant id: {path}")
+        source = _source_path(
+            item.get("source"),
+            field=f"variants[{index}].source",
+            path=path,
+        )
+        if not (child / source).is_file():
+            raise ConfigError(f"variant source does not exist: {child / source}")
+    return None
 
 
 def discover_modules(repo: Path, project: ProjectConfig) -> tuple[PythonModule, ...]:
@@ -110,16 +152,9 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
         seen.add(model_id)
 
         builder = data.get("builder")
-        source = data.get("source")
         if builder != "forge":
             raise ConfigError(f"unsupported model builder {builder!r}: {path}")
-        if not isinstance(source, str):
-            raise ConfigError(f"model source must be a string: {path}")
-        source_path = Path(source)
-        if source_path.is_absolute() or ".." in source_path.parts:
-            raise ConfigError(f"model source must remain inside model root: {path}")
-        if not (child / source_path).is_file():
-            raise ConfigError(f"model source does not exist: {child / source_path}")
+        source = _validate_model_sources(child, data, path)
 
         relative = child.relative_to(repo).as_posix()
         result.append(
@@ -127,7 +162,7 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
                 id=model_id,
                 root=child,
                 builder=builder,
-                source=source_path,
+                source=source,
                 watch=_watch(data, default=f"{relative}/**", path=path),
             )
         )

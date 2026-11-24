@@ -42,36 +42,38 @@ def resolve_plan(
 
     built_source_sha = source_sha(repo)
     rows = []
-    for model_id in sorted(selected_ids):
-        model = by_id[model_id]
+    for owner_id in sorted(selected_ids):
+        model = by_id[owner_id]
         relative_root = model.root.relative_to(repo).as_posix()
-        target = f"models/{model.id}"
-        rows.append(
-            {
-                "id": model.id,
-                "built_source_sha": built_source_sha,
-                "root": relative_root,
-                "source": (model.root / model.source).relative_to(repo).as_posix(),
-                "commands": f"{target}/solidcraft.json",
-                "native": {
-                    "sc": f"{target}/model.sc",
-                    "step": f"{target}/model.step",
-                    "png": f"{target}/model.png",
-                    "stl": f"{target}/model.stl"
-                    if "stl" in model.artifacts
-                    else None,
-                },
-                "snapshots": [
-                    {
-                        "name": item.name,
-                        "path": f"{target}/{item.name}",
-                        "camera": item.camera,
-                    }
-                    for item in model.snapshots
-                ],
-                "artifacts": list(model.artifacts),
-            }
-        )
+        for variant in sorted(model.variants, key=lambda item: item.id):
+            target = f"models/{variant.id}"
+            rows.append(
+                {
+                    "id": variant.id,
+                    "owner": model.id,
+                    "built_source_sha": built_source_sha,
+                    "root": relative_root,
+                    "source": (model.root / variant.source).relative_to(repo).as_posix(),
+                    "commands": f"{target}/solidcraft.json",
+                    "native": {
+                        "sc": f"{target}/model.sc",
+                        "step": f"{target}/model.step",
+                        "png": f"{target}/model.png",
+                        "stl": f"{target}/model.stl"
+                        if "stl" in model.artifacts
+                        else None,
+                    },
+                    "snapshots": [
+                        {
+                            "name": item.name,
+                            "path": f"{target}/{item.name}",
+                            "camera": item.camera,
+                        }
+                        for item in model.snapshots
+                    ],
+                    "artifacts": list(model.artifacts),
+                }
+            )
 
     return {
         "schema": 1,

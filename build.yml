@@ -1,7 +1,8 @@
 schema: 1
-branch: issue/36-snapshots-config
+branch: issue/44-model-variants
 
 modules:
+  - ci
   - build
 models:
   - simple-box
