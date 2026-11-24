@@ -3,6 +3,12 @@ schema: 1
 branches:
   stable: main
   development: dev
+  temporary_prefixes:
+    - issue/
+    - fix/
+    - feature/
+    - docs/
+    - chore/
 
 dependencies:
   forge:
