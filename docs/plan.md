@@ -4,24 +4,22 @@ This file contains unfinished work only.
 
 ## Now
 
-### #75 — explicit physical-model dependencies
+### #78 — keep generated CAD artifacts only on the build branch
 
-Add model-local dependency edges for real assembly/component relationships.
+Remove the accidental duplication of generated CAD output into `gh-pages`.
 
-Contract:
+Pages may inspect the durable build plan and command JSON while rendering, but
+must link generated output directly from:
 
-```yaml
-dependencies:
-  - hub75-panel
-  - corner-bracket
+```text
+build/<scope>/models/<variant>/...
 ```
 
-Dependencies name physical model owner ids. They are validated for unknown ids,
-self references and cycles. Model selection closes transitively over downstream
-dependents, and build-plan order is dependency-first.
+The model page uses build-plan paths for command JSON, PNG, SC, STEP, optional
+STL and named snapshots. Stable and development Pages resolve `main` and
+`dev` build scopes independently.
 
-Directory group priority remains ordering metadata only; it never creates a
-dependency.
+Source-owned presentation content may remain normal Hugo page resources.
 
 ## Accepted architecture
 
@@ -39,11 +37,10 @@ dependency.
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
-- internal Python capabilities run directly from source;
-- Pages runs separately from CAD CI and is explicitly dispatched after build publication;
-- Pages publishes stable `/` and development `/dev/` as one generated `gh-pages` tree.
+- Pages links durable CAD artifacts from `build` and never republishes them;
+- Pages publishes stable `/` and development `/dev/` presentation as one generated `gh-pages` tree.
 
 ## Next
 
-After #75 is accepted on `main`, sync the generic CI/build changes to the
-active CAD migration repository and migrate the final six historical roots.
+After #78 is accepted on `main`, sync the Pages fix to the active CAD
+migration repository and continue the final six-root migration.
