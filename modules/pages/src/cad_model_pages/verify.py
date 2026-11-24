@@ -70,6 +70,19 @@ def verify(*, repo: Path, site: Path, build_scope: Path) -> None:
 
     _require_file(site / "index.html")
     _require_file(site / "models" / "index.html")
+    for category in ("basic", "components", "advanced"):
+        _require_file(site / "models" / category / "index.html")
+
+    home_html = (site / "index.html").read_text(encoding="utf-8")
+    if "Recently updated models" not in home_html:
+        raise PagesVerificationError("home page lacks recently-updated catalog")
+
+    catalog_html = (site / "models" / "index.html").read_text(encoding="utf-8")
+    for heading in ("Basic Models", "Components", "Advanced Models"):
+        if heading not in catalog_html:
+            raise PagesVerificationError(
+                f"model catalog lacks category heading {heading!r}"
+            )
 
     seen: set[str] = set()
     for row in rows:

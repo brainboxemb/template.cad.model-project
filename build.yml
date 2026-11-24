@@ -1,8 +1,8 @@
 schema: 1
-branch: fix/48-gh-pages-ci-contract
+branch: fix/62-verify-fixture
 
 modules:
-  - ci
+  - pages
 models: []
 
 tasks:
