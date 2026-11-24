@@ -42,18 +42,12 @@ class SnapshotSpec:
 
 
 @dataclass(frozen=True)
-class SnapshotConfig:
-    camera: dict[str, object] | None = None
-    extra: tuple[SnapshotSpec, ...] = ()
-
-
-@dataclass(frozen=True)
 class ModelConfig:
     id: str
     root: Path
     source: Path
     artifacts: tuple[str, ...]
-    snapshot: SnapshotConfig
+    snapshots: tuple[SnapshotSpec, ...]
 
 
 @dataclass(frozen=True)
@@ -108,24 +102,21 @@ def _camera(value: object, field: str, path: Path) -> dict[str, object] | None:
     return dict(value)
 
 
-def _snapshot(data: dict[str, Any], path: Path) -> SnapshotConfig:
-    raw = data.get("snapshot")
+def _snapshots(data: dict[str, Any], path: Path) -> tuple[SnapshotSpec, ...]:
+    raw = data.get("snapshots", [])
     if raw is None:
-        return SnapshotConfig()
-    if not isinstance(raw, dict) or set(raw) - {"camera", "extra"}:
-        raise BuildConfigError(f"snapshot has invalid fields: {path}")
-    camera = _camera(raw.get("camera"), "snapshot.camera", path)
-    extra_raw = raw.get("extra", [])
-    if not isinstance(extra_raw, list):
-        raise BuildConfigError(f"snapshot.extra must be a list: {path}")
+        raw = []
+    if not isinstance(raw, list):
+        raise BuildConfigError(f"snapshots must be a list: {path}")
+
     result: list[SnapshotSpec] = []
     names: set[str] = set()
-    for index, item in enumerate(extra_raw):
+    for index, item in enumerate(raw):
         if not isinstance(item, dict) or set(item) - {"name", "camera"}:
-            raise BuildConfigError(f"snapshot.extra[{index}] is invalid: {path}")
+            raise BuildConfigError(f"snapshots[{index}] is invalid: {path}")
         name = item.get("name")
         if not isinstance(name, str) or not _PNG.fullmatch(name):
-            raise BuildConfigError(f"invalid extra snapshot name {name!r}: {path}")
+            raise BuildConfigError(f"invalid snapshot name {name!r}: {path}")
         if name == "model.png" or name in names:
             raise BuildConfigError(f"duplicate/reserved snapshot name {name!r}: {path}")
         names.add(name)
@@ -134,12 +125,12 @@ def _snapshot(data: dict[str, Any], path: Path) -> SnapshotConfig:
                 name=name,
                 camera=_camera(
                     item.get("camera"),
-                    f"snapshot.extra[{index}].camera",
+                    f"snapshots[{index}].camera",
                     path,
                 ),
             )
         )
-    return SnapshotConfig(camera=camera, extra=tuple(result))
+    return tuple(result)
 
 
 def load_project(repo: Path) -> ProjectConfig:
@@ -256,7 +247,7 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[ModelConfig, ..
                 root=model_root,
                 source=source,
                 artifacts=tuple(artifacts),
-                snapshot=_snapshot(data, path),
+                snapshots=_snapshots(data, path),
             )
         )
 
