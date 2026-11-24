@@ -7,18 +7,24 @@ Read AGENTS.md and docs/plan.md first.
 
 Core rules:
 
-- main is stable; dev is the only permanent development branch;
-- feature -> dev is squash; dev <-> main uses merge commits;
-- root ci.yml is stable project configuration including exact Forge pin;
-- root build.yml is the exact current work-branch selection;
-- main ignores build.yml and runs all items;
-- Python capabilities are independent modules under modules/<id>/ with their
-  own ci.yml, package source and tests;
-- Python tests never live at repository root;
-- CAD models are independent roots under models/<id>/;
-- CI and merge workflows are thin bootstraps for their owning local module;
-- generated output belongs below build/;
-- build.yml target-branch preservation belongs to modules/merge-policy.
-
-For a one-module PR, select only that module in build.yml.
+- main is stable; dev is the only permanent development source branch;
+- short-lived branch -> dev is squash;
+- dev -> main promotion is a merge commit;
+- main -> dev happens only for real stable-only content, never merely to copy a
+  promotion merge commit;
+- root ci.yml owns stable toolchain and generated branch configuration;
+- root build.yml is the exact work-branch selection;
+- main ignores build.yml and runs full;
+- internal Python capabilities live under modules/<id>/ and execute from src/;
+- CAD models are physical owner roots discovered from model-local ci.yml;
+- one owner may expand into multiple build variants;
+- generated CAD output is durable on build/{dev,main};
+- model.png is implicit; STL and additional snapshots are opt-in model config;
+- site/model presentation uses shared Hugo/Hextra layouts;
+- model.yml owns presentation metadata, ci.yml owns build/source identity;
+- optional page.md and extra_views extend a model page without custom
+  model-name branches;
+- stable Pages publish from main + accepted build/main to generated gh-pages;
+- model-group priority/dependency work is tracked separately after the first
+  live model page.
 ~~~

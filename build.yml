@@ -1,12 +1,9 @@
 schema: 1
-branch: issue/44-model-variants
+branch: issue/48-first-pages-model
 
 modules:
-  - ci
-  - build
-models:
-  - simple-box
+  - pages
+models: []
 
 tasks:
   - test
-  - build

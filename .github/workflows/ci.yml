@@ -39,6 +39,50 @@ jobs:
           PYTHONPATH: modules/ci/src
         run: python -m cad_model_ci
 
+      - name: Check out durable build evidence
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: build
+          path: prepared-build
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: "1.25.x"
+          cache: false
+
+      - name: Set up pinned Hugo
+        uses: peaceiris/actions-hugo@d1c81a15d4e6dca7086a17b9c2565cb70fd576bf
+        with:
+          hugo-version: "0.169.0"
+          extended: true
+
+      - name: Build and verify model Pages
+        env:
+          HUGO_BASEURL: https://brainboxemb.github.io/template.cad.model-project/
+          HUGO_PARAMS_SOURCEREF: ${{ github.event.pull_request.head.sha }}
+        run: |
+          cd site
+          hugo mod graph | grep -F "github.com/imfing/hextra@v0.13.0"
+          hugo --minify --printPathWarnings --destination "$GITHUB_WORKSPACE/generated-site"
+          cd "$GITHUB_WORKSPACE"
+
+          require_file() {
+            test -s "$1" || { echo "missing generated Pages file: $1" >&2; exit 1; }
+          }
+
+          require_file generated-site/models/simple-box/index.html
+          require_file generated-site/models/simple-box/model.png
+          require_file generated-site/models/simple-box/model.sc
+          require_file generated-site/models/simple-box/model.step
+          require_file generated-site/models/simple-box/model.stl
+          require_file generated-site/models/simple-box/solidcraft.json
+          grep -F "Simple Box" generated-site/models/simple-box/index.html
+          grep -F "40 × 30 × 10 mm" generated-site/models/simple-box/index.html
+          grep -F "Built in SolidCraft 0.48.1" generated-site/models/simple-box/index.html
+
   durable:
     name: durable
     if: github.event_name != 'pull_request'
@@ -89,3 +133,55 @@ jobs:
             --source-ref "$SOURCE_REF" \
             --source-sha "$SOURCE_SHA" \
             "${publish_args[@]}"
+
+      - name: Check out durable stable build evidence
+        if: github.ref_name == 'main'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: build
+          path: prepared-build
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go for Pages
+        if: github.ref_name == 'main'
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: "1.25.x"
+          cache: false
+
+      - name: Set up pinned Hugo for Pages
+        if: github.ref_name == 'main'
+        uses: peaceiris/actions-hugo@d1c81a15d4e6dca7086a17b9c2565cb70fd576bf
+        with:
+          hugo-version: "0.169.0"
+          extended: true
+
+      - name: Build stable Pages
+        if: github.ref_name == 'main'
+        env:
+          HUGO_BASEURL: https://brainboxemb.github.io/template.cad.model-project/
+          HUGO_PARAMS_SOURCEREF: ${{ github.sha }}
+        run: |
+          cd site
+          hugo mod graph | grep -F "github.com/imfing/hextra@v0.13.0"
+          hugo --minify --printPathWarnings --destination "$GITHUB_WORKSPACE/generated-site"
+          cd "$GITHUB_WORKSPACE"
+
+          test -s generated-site/models/simple-box/index.html
+          test -s generated-site/models/simple-box/model.png
+          test -s generated-site/models/simple-box/model.sc
+          test -s generated-site/models/simple-box/model.step
+          test -s generated-site/models/simple-box/model.stl
+          test -s generated-site/models/simple-box/solidcraft.json
+
+      - name: Publish stable Pages branch
+        if: github.ref_name == 'main'
+        env:
+          PYTHONPATH: modules/pages/src
+        run: >-
+          python -m cad_model_pages.publish
+          --repo .
+          --site generated-site
+          --source-ref main
+          --source-sha "${{ github.sha }}"
