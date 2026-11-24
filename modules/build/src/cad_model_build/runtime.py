@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 from scpf.headless import run_document
 
@@ -60,13 +61,13 @@ def _build_one(output_root: Path, row: dict) -> None:
     png = output_root / native["png"]
     saved.parent.mkdir(parents=True, exist_ok=True)
 
-    work = output_root / ".replay" / row["id"]
-    run_document(
-        document,
-        save=saved,
-        export=step,
-        work_dir=work,
-    )
+    with tempfile.TemporaryDirectory(prefix=f"scpf-{row['id']}-") as tmp:
+        run_document(
+            document,
+            save=saved,
+            export=step,
+            work_dir=Path(tmp),
+        )
 
     _snapshot(saved, png, row.get("snapshot_camera"))
 
