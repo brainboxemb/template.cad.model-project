@@ -1,7 +1,8 @@
-"""Execute the selected module tests/builds and CAD model batch."""
+"""Execute selected internal module tests and the CAD model batch."""
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -10,16 +11,19 @@ from .config import BuildSelection, ProjectConfig
 from .items import CadModel, PythonModule
 
 
-def _run(command: list[str]) -> None:
-    subprocess.run(command, check=True)
+def _run(command: list[str], *, env: dict[str, str] | None = None) -> None:
+    subprocess.run(command, check=True, env=env)
 
 
-def install_module(module: PythonModule) -> None:
-    _run([sys.executable, "-m", "pip", "install", "-e", str(module.root)])
+def _source_env(module_root: Path) -> dict[str, str]:
+    env = dict(os.environ)
+    source = str((module_root / "src").resolve())
+    previous = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = source + (os.pathsep + previous if previous else "")
+    return env
 
 
 def test_module(module: PythonModule) -> None:
-    install_module(module)
     _run(
         [
             sys.executable,
@@ -29,24 +33,8 @@ def test_module(module: PythonModule) -> None:
             "-s",
             str(module.root / "tests"),
             "-v",
-        ]
-    )
-
-
-def build_module(module: PythonModule, output_root: Path) -> None:
-    target = output_root / "modules" / module.id
-    target.mkdir(parents=True, exist_ok=True)
-    _run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            "--no-deps",
-            "--wheel-dir",
-            str(target),
-            str(module.root),
-        ]
+        ],
+        env=_source_env(module.root),
     )
 
 
@@ -59,7 +47,7 @@ def build_models(
 ) -> None:
     if not models:
         return
-    install_module(PythonModule("build", build_module_root))
+
     command = [
         sys.executable,
         "-m",
@@ -71,7 +59,8 @@ def build_models(
     ]
     for model in models:
         command.extend(["--model", model.id])
-    _run(command)
+
+    _run(command, env=_source_env(build_module_root))
 
 
 def execute(
@@ -83,13 +72,11 @@ def execute(
     modules: tuple[PythonModule, ...],
     models: tuple[CadModel, ...],
 ) -> None:
-    output_root = repo / project.output_root / namespace
     if "test" in selection.tasks:
         for module in modules:
             test_module(module)
+
     if "build" in selection.tasks:
-        for module in modules:
-            build_module(module, output_root)
         build_models(
             repo=repo,
             build_module_root=repo / project.modules_root / "build",
