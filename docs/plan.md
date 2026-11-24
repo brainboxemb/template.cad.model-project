@@ -4,38 +4,31 @@ This file contains unfinished work only.
 
 ## Now
 
-### #7 — self-contained local CI modules
+### #11 — independent branch cleanup
 
-Replace the rejected inline model-building workflow with the intended local
-architecture:
-
-- workflow YAML is thin;
-- root `ci.yml` owns the exact Forge pin and project roots;
-- root `build.yml` owns current branch/model/task selection for humans/agents;
-- CI never reads `build.yml`;
-- small `cad_project.*` modules own configuration, model discovery, Forge
-  execution, CI, working builds and merge policy;
-- each module has focused tests;
-- no shared CAD-CI or shared merge workflow is used.
+Add `modules/branch-cleanup` as a standalone Python item.
 
 Acceptance:
 
-1. unit tests for the local modules are green;
-2. CI builds `models/simple-box` from `ci.yml`;
-3. generated result is below `build/models/simple-box/`;
-4. changing/adding a model does not require a central model catalog;
-5. a working build rejects stale `build.yml.branch`;
-6. feature -> dev is squash;
-7. dev -> main and main -> dev are merge commits.
+1. module owns its config, package and tests;
+2. same-repository merged temporary branch -> dev is removable;
+3. main/dev are never removable;
+4. manual sweep requires no open PR plus merged-PR proof;
+5. workflow bootstraps only the cleanup module;
+6. current stale bootstrap branches are removed after acceptance.
+
+### merge-policy build.yml preservation
+
+Update `modules/merge-policy` in its own PR so integration preserves the
+target branch's own `build.yml`. Do not solve this in CI or cleanup.
+
+## Accepted direction
+
+Python capabilities and CAD models are independent build items. Non-main
+branches use `build.yml` to select exactly what is tested/built; main ignores
+it and runs the complete repository.
 
 ## Later
 
-Use the accepted template to migrate one real CAD project before adding site,
-release, gallery or additional engine features.
-
-## Repository setting still required
-
-GitHub branch/ruleset protection should require pull requests for `main` and
-`dev` so direct pushes/manual merges cannot bypass the local merge policy.
-
-The connected GitHub app cannot configure administration-level protection.
+After module boundaries, cleanup and branch-local build selection are proven,
+migrate one real CAD project before adding site/release/gallery scope.

@@ -4,131 +4,106 @@
 
 This repository is a reusable, self-contained CAD model-project template.
 
-Keep it smaller and clearer than the product repositories created from it.
+Models and Python capabilities use the same ownership pattern: each item has
+its own directory, configuration and tests/verification.
 
 ## Start work
 
-Before changing models:
+Before changing anything:
 
 1. read `docs/plan.md`;
-2. read `build.yml`;
-3. compare `build.yml.branch` with the actual Git branch;
-4. update `build.yml` immediately when a new work branch is created;
-5. change only the selected model(s) and their owned tests/configuration;
+2. create/switch to a short-lived branch from `dev`;
+3. update root `build.yml.branch` to the exact branch name;
+4. select only the modules/models this branch changes;
+5. select only the required tasks;
 6. keep generated output below `build/`.
-
-On `main`, ignore `build.yml`.
 
 ## Branch model
 
-Permanent source branches are only:
-
-- `main`;
-- `dev`.
-
-Use short-lived branches for changes.
+Permanent source branches are only `main` and `dev`.
 
 Required integration:
 
-- short-lived branch -> `dev`: squash merge;
+- short-lived branch -> `dev`: squash;
 - `dev` -> `main`: merge commit;
 - `main` -> `dev`: merge commit.
 
-Do not merge feature branches directly to `main`.
+Temporary branches use only configured prefixes from root `ci.yml`.
 
-The repository owns this policy locally. Do not replace it with a shared
-reusable merge workflow.
+After a successful same-repository short-lived PR is merged into `dev`, its
+source branch is removed by `modules/branch-cleanup`.
 
-## CI architecture
+A standalone cleanup sweep may remove old temporary branches only when there is
+no open PR and a merged PR proves integration into `dev`.
 
-The repository owns its CI implementation locally.
+`main` and `dev` are never cleanup candidates.
 
-GitHub workflow YAML must stay thin. It may:
+## ci.yml and build.yml
 
-- define triggers and permissions;
-- check out the repository;
-- bootstrap the local Python package;
-- invoke focused local project modules.
+Root `ci.yml` is stable repository configuration. It owns:
 
-Workflow YAML must **not** contain:
-
-- Forge repository/version/commit pins;
-- model ids or model paths;
-- direct `python -m scpf` model execution;
-- model selection logic;
-- build-output path logic;
-- merge-method classification;
-- large shell/Python implementations.
-
-Those responsibilities belong in versioned repository configuration and small,
-tested Python modules.
-
-The root `ci.yml` is the stable CI/build contract. It owns:
-
-- exact Forge dependency repository/version/commit;
-- model source root;
+- permanent branch names and temporary branch prefixes;
+- exact Forge repository/version/commit;
+- module root;
+- model root;
 - generated output root.
 
-Normal CI uses `ci.yml` and builds the repository model set. It never reads
-`build.yml`.
+Root `build.yml` is branch-specific execution selection.
 
-## Working builds
+On a non-main branch it must contain the exact current branch name, selected
+modules/models and tasks. A mismatch is stale and CI fails.
 
-Root `build.yml` is only for humans/agents.
-
-It owns:
-
-- the exact work-branch name;
-- selected model ids or `all`;
-- requested work tasks.
-
-If `build.yml.branch` does not equal the actual branch, the file is stale and
-a working build must refuse to run.
-
-`main` ignores `build.yml`.
-
-## Generated output
-
-All generated output belongs below root `build/`.
-
-Never write generated output into a model source directory.
-
-## Models
-
-Every `models/<id>/` directory is independently owned.
-
-A model root contains its own:
-
-- `ci.yml`;
-- `model.yml`;
-- engine source such as `scpf/model.py`;
-- focused tests or verification when needed.
-
-Do not create a central model catalog in Python.
+On `main`, `build.yml` is ignored and the complete repository is
+tested/built.
 
 ## Python modules
 
-Repository Python follows the same ownership rule as models: small modules with
-one clear responsibility and focused tests.
+Every Python capability is a standalone item:
 
-Current modules are deliberately separated:
+```text
+modules/<id>/
+  ci.yml
+  pyproject.toml
+  src/
+  tests/
+```
 
-- `cad_project.config` — configuration parsing/validation;
-- `cad_project.models` — independent model discovery/selection;
-- `cad_project.forge` — Forge installation and one-model execution;
-- `cad_project.ci` — CI entrypoint using only `ci.yml`;
-- `cad_project.build` — developer/agent entrypoint using `build.yml`;
-- `cad_project.merge_policy` — branch-role and merge-method policy.
+Tests for a Python capability live under that module. Root-level Python tests
+are not allowed.
 
-Do not add a catch-all `scripts/ci/*.py` layer.
+Current modules:
 
-A module should be independently changeable and verifiable by its own focused
-tests.
+- `modules/ci` — configuration, selection and orchestration;
+- `modules/build` — model build execution;
+- `modules/merge-policy` — branch integration/merge method;
+- `modules/branch-cleanup` — safe temporary branch cleanup.
+
+A PR changing one module selects only that module in `build.yml`.
+
+## Models
+
+Every CAD model is a standalone item under `models/<id>/` with its own config,
+metadata, engine source and model-owned verification when needed.
+
+Do not create a central model catalog in Python.
+
+## Workflows
+
+Workflow YAML stays thin and bootstraps only its owning module.
+
+- CI workflow -> `modules/ci`;
+- merge workflow -> `modules/merge-policy`;
+- branch cleanup workflow -> `modules/branch-cleanup`.
+
+## build.yml merge ownership
+
+`build.yml` is branch-local state. Target-branch preservation during
+integration belongs to `modules/merge-policy`, not CI, build or cleanup.
 
 ## External ownership
 
-Forge compiler/API behavior still belongs in `lib.py.solidcraft.forge`.
+Forge compiler/API behavior remains owned by
+`lib.py.solidcraft.forge`.
 
-This template does **not** depend on shared CAD-CI or shared merge workflows.
-Do not move its normal repository execution back into `tool.cad.ci` or
-`lib.py.cad.ci`.
+Normal repository CI/build/merge/cleanup behavior is local to repositories
+created from this template.

@@ -1,9 +1,9 @@
 schema: 1
+branch: dev
 
-branch: fix/7-remove-local-ci
-
-models:
-  - simple-box
+modules: all
+models: all
 
 tasks:
+  - test
   - build
