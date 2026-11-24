@@ -3,10 +3,9 @@
 ## Stable configuration
 
 Root `ci.yml` defines permanent source branches, the generated build branch,
-exact Forge/SolidCraft pins and repository roots. Forge records three distinct
-identities: `release` is the readable Git tag (for example `v0.15.0`),
-`version` is the SCPF package version (`0.15.0`), and `commit` is the immutable
-Git SHA used by CI.
+Forge/SolidCraft versions and repository roots. Forge is selected by its
+released Git tag, for example `version: v0.15.0`. Local bootstrap and CI use
+that same release version.
 
 ## Local bootstrap
 
@@ -17,10 +16,9 @@ release changes:
 .\bootstrap.ps1
 ```
 
-The bootstrap reads `dependencies.forge` from root `ci.yml`, verifies that
-the configured release tag resolves to the exact pinned commit, installs SCPF
-from `@release`, and checks both the installed package version and the
-SolidCraft version qualified by that Forge release.
+The bootstrap reads `dependencies.forge.version` from root `ci.yml`,
+installs SCPF directly from that release tag and checks the installed package
+version plus the SolidCraft version qualified by that Forge release.
 
 After bootstrap, models can be sent directly to an open SolidCraft GUI:
 
@@ -28,7 +26,7 @@ After bootstrap, models can be sent directly to an open SolidCraft GUI:
 python -m scpf models/advanced/simple_mft_assembly/scpf/model.py --connect --new
 ```
 
-No Forge SHA needs to be copied manually.
+No Forge SHA is part of the normal model-project workflow.
 
 ## Branch integration
 
@@ -188,7 +186,7 @@ Generated artifacts remain below root `build/`.
 
 Root `ci.yml` pins the complete qualified CAD toolchain:
 
-- Forge repository, version and exact commit;
+- Forge repository and released version tag;
 - released SolidCraft runtime image and exact SolidCraft version.
 
 Model-local `ci.yml` owns build execution. A minimal processed model declares
