@@ -1,9 +1,8 @@
 schema: 1
-branch: feature/forge-release-bootstrap
+branch: issue/99-idempotent-merge
 
 modules:
-  - ci
-  - build
+  - merge-policy
 models: []
 tasks:
   - test
