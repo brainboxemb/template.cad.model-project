@@ -1,30 +1,28 @@
-"""CLI entrypoint for one configured CAD model build."""
+"""CLI entrypoint for one resolved repository CAD build batch."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
-from .forge import build_model, install_forge
+from .pipeline import execute
 
 
-def main() -> None:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--forge-repository", required=True)
-    parser.add_argument("--forge-version", required=True)
-    parser.add_argument("--forge-commit", required=True)
-    parser.add_argument("--model-id", required=True)
-    parser.add_argument("--source", required=True)
-    parser.add_argument("--output-root", required=True)
-    args = parser.parse_args()
+    parser.add_argument("--repo", type=Path, default=Path.cwd())
+    parser.add_argument("--namespace", required=True)
+    parser.add_argument("--model", action="append", default=[])
+    args = parser.parse_args(argv)
 
-    install_forge(args.forge_repository, args.forge_commit)
-    build_model(
-        model_id=args.model_id,
-        source=Path(args.source),
-        output_root=Path(args.output_root),
+    path = execute(
+        repo=args.repo,
+        namespace=args.namespace,
+        selected_ids=tuple(args.model),
     )
+    print(f"CAD build plan: {path}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
