@@ -1,15 +1,15 @@
 {
   "forge": {
-    "commit": "cd46d6797df319b9d13605c11568990113772700",
+    "commit": "efc88bfcaf452051d721347f2e5ca561decad654",
     "repository": "brainboxemb/lib.py.solidcraft.forge",
-    "version": "0.14.0"
+    "version": "0.15.0"
   },
   "models": [
     {
       "artifacts": [
         "stl"
       ],
-      "built_source_sha": "d8df5c3035153849646ce94a83c8b54025464653",
+      "built_source_sha": "8d7234c65d4173443bd3717cbec8fe822d906627",
       "commands": "models/simple-box/solidcraft.json",
       "dependencies": [],
       "id": "simple-box",
@@ -51,5 +51,5 @@
     "image": "ghcr.io/brainboxemb/cad-solidcraft:v0.3.5",
     "version": "0.48.1"
   },
-  "source_sha": "d8df5c3035153849646ce94a83c8b54025464653"
+  "source_sha": "8d7234c65d4173443bd3717cbec8fe822d906627"
 }
