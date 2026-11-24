@@ -4,31 +4,31 @@ This file contains unfinished work only.
 
 ## Now
 
-### #15 — incremental dev CI
+### #17 — dispatch target CI after local merge
 
-Implement three CI selection modes:
+After a successful local merge-policy integration, explicitly dispatch the
+local CI workflow on the PR base branch.
 
-- work branch/PR: matching `build.yml`;
-- dev: changed paths since the last successful dev integration build;
-- main: full.
+This is required because GITHUB_TOKEN merges do not reliably create a second
+push-triggered Actions run.
 
-Requirements:
+Acceptance:
 
-1. stale build.yml is ignored, not failed;
-2. dev baseline comes only from successful push/workflow_dispatch CI;
-3. cancelled dev runs do not advance that baseline;
-4. unsafe/missing baseline falls back to full;
-5. changed-item impact is item-local;
-6. CI concurrency cancels superseded runs.
+1. merge-policy has actions: write;
+2. dispatch occurs only after successful merge;
+3. dev target dispatch enters incremental dev CI;
+4. main target dispatch enters full CI;
+5. rapid dev dispatches are coalesced by CI cancel-in-progress.
 
 ## Accepted
 
-- independent Python module roots;
-- branch-local work selection;
-- standalone branch cleanup;
-- only main/dev remain as permanent branches.
+- work branches use matching build.yml;
+- dev uses changes since last successful integration CI;
+- main runs full;
+- cancelled dev runs do not advance the baseline;
+- item impact is local to each item;
+- standalone branch cleanup is active.
 
 ## Later
 
-After incremental dev selection is proven live, migrate one real CAD project
-before expanding site/release/gallery scope.
+Migrate one real CAD project before adding site/release/gallery scope.

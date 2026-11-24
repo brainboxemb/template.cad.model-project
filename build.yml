@@ -1,8 +1,8 @@
 schema: 1
-branch: issue/15-preserve-build-selection
+branch: issue/17-dispatch-target-ci
 
 modules:
-  - ci
+  - merge-policy
 
 models: []
 
