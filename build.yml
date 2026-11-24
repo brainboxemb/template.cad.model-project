@@ -1,11 +1,9 @@
 schema: 1
-branch: feature/62-catalog-navigation
+branch: fix/62-verify-fixture
 
 modules:
   - pages
-models:
-  - simple-box
+models: []
 
 tasks:
   - test
-  - build
