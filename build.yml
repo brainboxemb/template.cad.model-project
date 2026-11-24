@@ -1,7 +1,8 @@
 schema: 1
-branch: issue/48-first-pages-model
+branch: fix/48-generic-pages-verification
 
 modules:
+  - ci
   - pages
 models: []
 
