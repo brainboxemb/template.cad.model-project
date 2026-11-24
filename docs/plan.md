@@ -4,6 +4,13 @@ This file contains unfinished work only.
 
 ## Now
 
+### #97 — use Forge release version and restore local bootstrap
+
+Use the Forge release tag directly as the model-project dependency version.
+Remove the redundant SHA pin and add a root `bootstrap.ps1` that installs the
+same released version used by CI.
+
+
 ### #88 — upgrade Forge baseline to v0.15.0
 
 The template must track the accepted Forge baseline used by the current CAD
@@ -13,8 +20,7 @@ remaining visible in root/world space.
 
 Accepted pin:
 
-- Forge v0.15.0
-- commit `efc88bfcaf452051d721347f2e5ca561decad654`
+- Forge `v0.15.0`
 - SolidCraft 0.48.1
 - runtime `ghcr.io/brainboxemb/cad-solidcraft:v0.3.5`
 
@@ -39,5 +45,5 @@ Accepted pin:
 
 ## Next
 
-Accept #88 through local `/merge`, promote it to `main`, then sync the exact
-toolchain pin to the active CAD repository and rebuild `hub75-screen`.
+Accept #88 through local `/merge`, promote it to `main`, then sync the released
+toolchain version to the active CAD repository and rebuild `hub75-screen`.
