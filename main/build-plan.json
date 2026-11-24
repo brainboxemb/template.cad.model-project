@@ -9,7 +9,7 @@
       "artifacts": [
         "stl"
       ],
-      "built_source_sha": "4ab9cf934413d7022be29d4bd248d82bdd52275b",
+      "built_source_sha": "105d558829cd22199995f895ae12883eab42257e",
       "commands": "models/simple-box/solidcraft.json",
       "id": "simple-box",
       "native": {
@@ -46,5 +46,5 @@
     "image": "ghcr.io/brainboxemb/cad-solidcraft:v0.3.5",
     "version": "0.48.1"
   },
-  "source_sha": "4ab9cf934413d7022be29d4bd248d82bdd52275b"
+  "source_sha": "105d558829cd22199995f895ae12883eab42257e"
 }
