@@ -4,6 +4,13 @@ This file contains unfinished work only.
 
 ## Now
 
+### #97 — expose Forge release tag and restore local bootstrap
+
+Make the human release identity explicit beside the package version and
+immutable CI commit. Add a root `bootstrap.ps1` that installs from the release
+tag only after verifying that the tag resolves to the pinned commit.
+
+
 ### #88 — upgrade Forge baseline to v0.15.0
 
 The template must track the accepted Forge baseline used by the current CAD
