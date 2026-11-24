@@ -1,11 +1,8 @@
 schema: 1
-branch: issue/17-dispatch-target-ci
+branch: issue/20-local-merge-smoke
 
-modules:
-  - merge-policy
-
+modules: []
 models: []
 
 tasks:
   - test
-  - build
