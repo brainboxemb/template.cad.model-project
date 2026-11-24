@@ -27,6 +27,8 @@ def api(repository: str, path: str, token: str, *, method: str = "GET", body=Non
     )
     try:
         with request.urlopen(req) as response:
+            if response.status == 204:
+                return None
             return json.load(response)
     except error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
@@ -50,6 +52,16 @@ def require_green_checks(repository: str, sha: str, token: str) -> None:
         raise MergePolicyError(f"checks not green: {', '.join(failed)}")
 
 
+def dispatch_ci(repository: str, ref: str, token: str) -> None:
+    api(
+        repository,
+        "actions/workflows/ci.yml/dispatches",
+        token,
+        method="POST",
+        body={"ref": ref},
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository", required=True)
@@ -65,9 +77,11 @@ def main() -> None:
         raise MergePolicyError("only the repository owner may execute /merge")
 
     pr = api(args.repository, f"pulls/{args.pull_request_number}", token)
-    method = merge_method(head=pr["head"]["ref"], base=pr["base"]["ref"])
+    base = pr["base"]["ref"]
+    method = merge_method(head=pr["head"]["ref"], base=base)
     head_sha = pr["head"]["sha"]
     require_green_checks(args.repository, head_sha, token)
+
     result = api(
         args.repository,
         f"pulls/{args.pull_request_number}/merge",
@@ -77,6 +91,8 @@ def main() -> None:
     )
     if not result.get("merged"):
         raise MergePolicyError(result.get("message", "GitHub did not merge PR"))
+
+    dispatch_ci(args.repository, base, token)
     print(result["sha"])
 
 
