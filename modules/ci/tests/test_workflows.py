@@ -32,7 +32,10 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", pages)
         self.assertNotIn("workflow_run:", pages)
         self.assertIn("peaceiris/actions-hugo@v3", pages)
-        self.assertIn("actions/deploy-pages@v5", pages)
+        self.assertIn("python -m cad_model_pages.publish", pages)
+        self.assertIn("--repo source-main", pages)
+        self.assertNotIn("actions/deploy-pages", pages)
+        self.assertNotIn("github-pages", pages)
 
     def test_workflow_actions_use_readable_release_tags(self):
         for path in Path(".github/workflows").glob("*.yml"):
