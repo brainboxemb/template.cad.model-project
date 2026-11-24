@@ -206,17 +206,16 @@ points at the source SHA being published.
 
 Stable Pages use Hugo 0.169.0 with Hextra v0.13.0.
 
-The site consumes source and generated evidence without rebuilding CAD:
+The site consumes source and generated build output without rebuilding CAD.
+One Pages deployment contains both source/build scopes:
 
 ```text
-main source
-  model.yml + ci.yml + optional page.md/assets
-                    \
-                     -> Hugo -> GitHub Pages artifact
-                    /
-build/main
-  build-plan.json + model artifacts
+/       <- main source + build/main
+/dev/   <- dev source  + build/dev
 ```
+
+Both scopes use the same Hugo/Hextra layouts. Each scope is verified against
+its matching build plan before the combined Pages artifact is uploaded.
 
 `model.yml` owns presentation text. `ci.yml` owns source/variant identity.
 The generated `build/main` scope owns JSON, SC, STEP, PNG and optional STL.
@@ -226,9 +225,12 @@ The primary model layout is shared. Model-specific additions use optional
 reference/build images. Do not add model-name branches to shared Hugo
 templates.
 
-PRs build Pages read-only against accepted stable build evidence. On a
-successful permanent `main` run, the verified Hugo output is uploaded with
-GitHub's Pages artifact action and deployed by a separate `deploy-pages` job.
+Pages runs in a separate workflow from CAD CI. A successful `main` or `dev`
+CI run triggers one Pages assembly that rebuilds both the stable root and
+`/dev/`, then uploads and deploys them atomically. CAD CI therefore does not
+wait for Hugo or Pages deployment.
+
+PRs that change site-related files get a separate read-only Pages check.
 
 Repository **Settings -> Pages -> Build and deployment -> Source** must be set
 to **GitHub Actions**. No `gh-pages` source branch is required for deployment.
