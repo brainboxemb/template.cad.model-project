@@ -34,7 +34,7 @@ Do not add dependency propagation in this issue.
 - compact model `ci.yml` with implicit primary snapshot;
 - physical model owners may expand into multiple build variants;
 - internal Python capabilities run directly from source;
-- Pages runs separately from CAD CI;
+- Pages runs separately from CAD CI and is explicitly dispatched after build publication;
 - Pages publishes stable `/` and development `/dev/` in one deployment.
 
 ## Next
