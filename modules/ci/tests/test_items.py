@@ -49,6 +49,33 @@ class ItemTests(unittest.TestCase):
             self.assertIn(".github/workflows/ci.yml", modules[0].watch)
             self.assertIn("models/components/box/**", models[0].watch)
 
+
+    def test_multi_variant_root_is_one_ci_item(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            model = repo / "models" / "components" / "rail"
+            (model / "scpf").mkdir(parents=True)
+            (model / "scpf/model.py").write_text("object()\n", encoding="utf-8")
+            (model / "scpf/makita.py").write_text("object()\n", encoding="utf-8")
+            (model / "ci.yml").write_text(
+                """schema: 1
+id: guide-rail
+builder: forge
+variants:
+  - id: guide-rail
+    source: scpf/model.py
+  - id: guide-rail-makita
+    source: scpf/makita.py
+""",
+                encoding="utf-8",
+            )
+
+            models = discover_models(repo, self.project())
+            self.assertEqual(len(models), 1)
+            self.assertEqual(models[0].id, "guide-rail")
+            self.assertIsNone(models[0].source)
+            self.assertIn("models/components/rail/**", models[0].watch)
+
     def test_process_false_model_is_not_selected_as_an_item(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
