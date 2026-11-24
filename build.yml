@@ -1,13 +1,8 @@
 schema: 1
-branch: issue/10-verify-local-merge
+branch: dev
 
-modules:
-  - ci
-  - build
-  - merge-policy
-
-models:
-  - simple-box
+modules: all
+models: all
 
 tasks:
   - test
