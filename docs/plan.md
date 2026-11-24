@@ -2,43 +2,34 @@
 
 This file contains unfinished work only.
 
+## Now
+
+### #28 — central CI merge gate
+
+The local merge-policy must qualify only the PR-specific central `ci` check.
+
+Do not let merge-policy, branch cleanup or unrelated check-runs on the same SHA
+block the merge gate.
+
+Acceptance:
+
+1. green PR-specific ci allows merge;
+2. pending ci blocks;
+3. failed ci blocks;
+4. missing PR-specific ci blocks;
+5. unrelated merge/cleanup checks are ignored.
+
 ## Accepted architecture
 
-The template now uses:
-
-- `main` as stable branch;
-- `dev` as the single development branch;
-- squash for short-lived branch -> dev;
-- merge commits for permanent branch integration;
-- independent Python modules with module-local tests;
-- independent CAD model roots;
-- root `ci.yml` for stable project configuration and exact Forge pin;
-- root `build.yml` for explicit work-branch selection;
+- work branch selection from matching build.yml;
 - incremental dev CI from the last successful integration baseline;
 - full main CI;
-- cancel-in-progress for superseded CI runs;
+- cancel-in-progress;
 - item-local impact/watch metadata;
-- local merge-policy with explicit target-CI dispatch;
-- independent branch cleanup with explicit post-merge dispatch.
-
-## Current acceptance
-
-### #26
-
-Final docs-only end-to-end proof:
-
-```text
-work branch
-  -> matching build.yml: no items
-  -> /merge
-  -> squash to dev
-  -> dispatch CI(dev)
-  -> dispatch branch-cleanup(dev)
-  -> docs-only incremental dev run
-  -> temporary branch removed
-```
+- local merge-policy dispatches target CI and branch cleanup;
+- standalone cleanup removes merged temporary branches.
 
 ## Next
 
-Use this template to migrate one real CAD project before adding
-site/release/gallery scope.
+After #28 is live-proven on main -> dev synchronization, migrate one real CAD
+project before expanding site/release/gallery scope.
