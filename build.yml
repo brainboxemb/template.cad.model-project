@@ -1,10 +1,11 @@
 schema: 1
-branch: feature/model-dependencies
+branch: feature/github-stl-viewer-link
 
 modules:
-  - ci
-  - build
-models: []
+  - pages
+models:
+  - simple-box
 
 tasks:
   - test
+  - build
