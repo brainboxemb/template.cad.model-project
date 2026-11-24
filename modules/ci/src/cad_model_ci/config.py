@@ -19,11 +19,13 @@ class ConfigError(ValueError):
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
+_RELEASE = re.compile(r"^v\d+\.\d+\.\d+$")
 
 
 @dataclass(frozen=True)
 class ForgeDependency:
     repository: str
+    release: str
     version: str
     commit: str
 
@@ -107,10 +109,13 @@ def load_project(repo: Path) -> ProjectConfig:
     if not isinstance(forge, dict):
         raise ConfigError(f"dependencies.forge must be a mapping: {path}")
     repository = forge.get("repository")
+    release = forge.get("release")
     version = forge.get("version")
     commit = forge.get("commit")
     if not isinstance(repository, str) or not _REPOSITORY.fullmatch(repository):
         raise ConfigError(f"invalid Forge repository: {path}")
+    if not isinstance(release, str) or not _RELEASE.fullmatch(release):
+        raise ConfigError(f"invalid Forge release tag: {path}")
     if not isinstance(version, str) or not version:
         raise ConfigError(f"invalid Forge version: {path}")
     if not isinstance(commit, str) or not _COMMIT.fullmatch(commit):
@@ -119,7 +124,7 @@ def load_project(repo: Path) -> ProjectConfig:
     return ProjectConfig(
         stable_branch=stable,
         development_branch=development,
-        forge=ForgeDependency(repository, version, commit),
+        forge=ForgeDependency(repository, release, version, commit),
         modules_root=_relative(roots.get("modules"), "roots.modules", path),
         models_root=_relative(roots.get("models"), "roots.models", path),
         output_root=_relative(roots.get("output"), "roots.output", path),
