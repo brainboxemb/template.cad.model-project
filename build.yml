@@ -1,8 +1,7 @@
 schema: 1
-branch: fix/48-dispatch-pages-after-build
+branch: fix/48-gh-pages-publication
 
 modules:
-  - ci
   - pages
 models: []
 

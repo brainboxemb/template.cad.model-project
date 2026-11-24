@@ -74,9 +74,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
-      id-token: write
+      contents: write
     steps:
       - name: Check out stable source
         uses: actions/checkout@v7
@@ -84,7 +82,7 @@ jobs:
           ref: main
           path: source-main
           fetch-depth: 1
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Check out development source
         uses: actions/checkout@v7
@@ -138,26 +136,12 @@ jobs:
           --base-url "https://brainboxemb.github.io/template.cad.model-project/dev/"
           --source-ref dev
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: generated-site
-
-  deploy:
-    name: pages-deploy
-    if: github.event_name == 'workflow_dispatch'
-    needs: assemble
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Publish Pages branch
+        env:
+          PYTHONPATH: source-main/modules/pages/src
+        run: >-
+          python -m cad_model_pages.publish
+          --repo source-main
+          --site "${GITHUB_WORKSPACE}/generated-site"
+          --source-ref main
+          --source-sha "$(git -C source-main rev-parse HEAD)"
