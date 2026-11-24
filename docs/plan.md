@@ -18,11 +18,11 @@ The page must join:
 The shared page layout supports optional model-owned `page.md` prose and
 declarative `extra_views`; it must not contain model-name branches.
 
-Stable publication uses GitHub Pages artifact deployment only after a
-successful `main` run. PR site builds are read-only.
+Pages is a separate workflow from CAD CI. After a successful `main` or
+`dev` CI run it assembles one deployment with the stable site at `/` and
+the development site at `/dev/`. PR site builds are read-only.
 
-The implementation is ready, but repository Pages activation is an external
-admin setting: **Settings -> Pages -> Source: GitHub Actions**.
+Repository Pages must use **Settings -> Pages -> Source: GitHub Actions**.
 
 ## Accepted architecture
 
