@@ -1,11 +1,8 @@
 schema: 1
-branch: issue/22-dispatch-cleanup
+branch: issue/26-final-acceptance
 
-modules:
-  - merge-policy
-
+modules: []
 models: []
 
 tasks:
   - test
-  - build
