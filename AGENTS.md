@@ -33,6 +33,37 @@ Required integration:
 
 Do not merge feature branches directly to `main`.
 
+## CI boundary
+
+GitHub Actions is orchestration-only.
+
+A repository workflow may:
+
+- define triggers;
+- define the minimum permissions required by the called workflow;
+- call an exact released shared workflow;
+- pass repository configuration inputs defined by that workflow.
+
+A repository workflow must **not**:
+
+- install Python, Forge, SolidCraft or another CAD/runtime package;
+- use `actions/setup-python` for model execution;
+- run `pip install` for model/CI dependencies;
+- invoke `python -m scpf`, SolidCraft, Docker or another CAD engine directly;
+- name or enumerate models;
+- decide changed/selected models;
+- create, copy, validate or publish model build output;
+- implement build, verification, cache or publication behavior with `run:`;
+- add repository-local generic CI scripts to replace missing shared behavior.
+
+Normal model CI must come from the released shared CAD-CI stack.
+
+If the shared owner layer cannot perform a required operation, stop and record
+or fix that capability in its owner repository. Do not make this template green
+with consumer-local workflow logic.
+
+Violation of this boundary is a blocking review defect.
+
 ## CI versus working builds
 
 Do not mix CI selection with current agent/developer work selection.
