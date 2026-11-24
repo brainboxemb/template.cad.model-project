@@ -25,8 +25,8 @@ Core rules:
 - optional page.md and extra_views extend a model page without custom
   model-name branches;
 - Pages runs separately and is dispatched after build publication; CI does not wait for it;
-- one Pages deployment publishes main at `/` and dev at `/dev/`;
-- repository Pages source must be configured as GitHub Actions;
+- generated `gh-pages` publishes main at `/` and dev at `/dev/`;
+- Pages uses branch publication, not `deploy-pages`/`github-pages` environment deployment;
 - model-group priority/dependency work is tracked separately after the first
   live model page.
 ~~~
