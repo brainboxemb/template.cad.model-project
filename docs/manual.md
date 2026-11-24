@@ -200,5 +200,32 @@ unselected active models, and removes model directories that are no longer
 active. A full `main` build replaces the complete `main/` scope.
 
 Publication uses normal non-force pushes and checks that the source branch still
-points at the source SHA being published. Pages/Hugo/`gh-pages` are a separate
-later concern.
+points at the source SHA being published.
+
+## Pages
+
+Stable Pages use Hugo 0.169.0 with Hextra v0.13.0.
+
+The site consumes source and generated evidence without rebuilding CAD:
+
+```text
+main source
+  model.yml + ci.yml + optional page.md/assets
+                    \
+                     -> Hugo -> gh-pages
+                    /
+build/main
+  build-plan.json + model artifacts
+```
+
+`model.yml` owns presentation text. `ci.yml` owns source/variant identity.
+The generated `build/main` scope owns JSON, SC, STEP, PNG and optional STL.
+
+The primary model layout is shared. Model-specific additions use optional
+`page.md` for background prose and declarative `extra_views` in metadata for
+reference/build images. Do not add model-name branches to shared Hugo
+templates.
+
+PRs build Pages read-only against accepted stable build evidence. Only a
+successful permanent `main` run publishes the complete generated site to
+`ci.yml.generated.pages_branch`.
