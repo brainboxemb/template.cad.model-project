@@ -40,7 +40,11 @@ source branch is removed by `modules/branch-cleanup`.
 `main` and `dev` are never cleanup candidates.
 
 The generated `build` branch is not a source branch. It stores durable technical
-output for the permanent source scopes and is also never a cleanup candidate.
+output for the permanent source scopes and is never a cleanup candidate.
+
+The generated `gh-pages` branch is also not a source branch. Stable Pages are
+built only from `main` source plus accepted `build/main` evidence and published
+there after a successful stable run.
 
 ## CI selection modes
 
@@ -91,6 +95,21 @@ main/
 PR/work-branch output is verification-only and is never published. Incremental
 `dev` publication replaces only rebuilt model directories and preserves other
 active model output. `main` is full and replaces its complete scope.
+
+## Pages
+
+Hugo/Hextra presentation lives below `site/`.
+
+The page data boundary is explicit:
+
+- `model.yml`: presentation metadata;
+- `ci.yml`: build/source identity and variants;
+- generated `build/main`: accepted model artifacts;
+- optional model-local `page.md`: additional background prose;
+- optional model metadata `extra_views`: additional reference/build views.
+
+Shared layouts must not branch on model names. Model-specific content belongs in
+model-owned metadata/resources. Pages never runs Forge or SolidCraft.
 
 ## Item impact
 
