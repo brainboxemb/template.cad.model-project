@@ -12,7 +12,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertNotIn("lib.py.solidcraft.forge", text)
         self.assertNotIn("python -m scpf", text)
 
-    def test_pr_job_is_read_only_and_durable_job_can_publish(self):
+    def test_pr_job_is_read_only_and_build_job_can_publish(self):
         text = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
         self.assertIn("if: github.event_name == 'pull_request'", text)
         self.assertIn("contents: read", text)
@@ -20,6 +20,21 @@ class WorkflowBoundaryTests(unittest.TestCase):
         self.assertIn("contents: write", text)
         self.assertIn("python -m cad_model_build.publish", text)
         self.assertIn("PYTHONPATH: modules/build/src", text)
+        self.assertNotIn("cad_model_pages", text)
+        self.assertNotIn("actions-hugo", text)
+        self.assertNotIn("deploy-pages", text)
+
+    def test_pages_are_a_separate_workflow(self):
+        text = Path(".github/workflows/pages.yml").read_text(encoding="utf-8")
+        self.assertIn('workflows: ["CI"]', text)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", text)
+        self.assertIn("peaceiris/actions-hugo@v3", text)
+        self.assertIn("actions/deploy-pages@v5", text)
+
+    def test_workflow_actions_use_readable_release_tags(self):
+        for path in Path(".github/workflows").glob("*.yml"):
+            text = path.read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"uses: [^\s]+@[0-9a-f]{40}")
 
     def test_merge_workflow_runs_merge_policy_from_source(self):
         text = Path(".github/workflows/merge-policy.yml").read_text(

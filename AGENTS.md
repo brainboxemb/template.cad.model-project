@@ -39,7 +39,7 @@ source branch is removed by `modules/branch-cleanup`.
 
 `main` and `dev` are never cleanup candidates.
 
-The generated `build` branch is not a source branch. It stores durable technical
+The generated `build` branch is not a source branch. It stores generated technical
 output for the permanent source scopes and is never a cleanup candidate.
 
 Stable GitHub Pages are built only from `main` source plus accepted
@@ -76,12 +76,12 @@ If no safe successful baseline exists, run full.
 
 Ignore `build.yml` and run full.
 
-## Durable build output
+## Build output
 
 Successful permanent-branch model builds publish to the generated branch
 configured by `ci.yml.generated.build_branch`.
 
-The generated branch contains complete durable source scopes:
+The generated branch contains complete build scopes:
 
 ```text
 dev/

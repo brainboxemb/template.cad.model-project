@@ -37,35 +37,31 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-box", page)
         self.assertNotIn("simple-mft", page)
 
-    def test_workflow_uses_generic_pages_verifier_without_model_ids(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text(
+    def test_pages_workflow_builds_main_and_dev_scopes(self):
+        workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("python -m cad_model_pages.verify", workflow)
         self.assertIn("--build-scope prepared-build/main", workflow)
+        self.assertIn("--destination generated-site", workflow)
+        self.assertIn("--build-scope prepared-build/dev", workflow)
+        self.assertIn("--destination generated-site/dev", workflow)
+        self.assertIn(
+            'https://brainboxemb.github.io/template.cad.model-project/dev/',
+            workflow,
+        )
         self.assertNotIn("simple-box", workflow)
         self.assertNotIn("simple-mft", workflow)
 
-    def test_workflow_uses_official_pages_artifact_deployment(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text(
+    def test_pages_workflow_uses_official_artifact_deployment(self):
+        workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn(
-            "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b",
-            workflow,
-        )
-        self.assertIn(
-            "actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa",
-            workflow,
-        )
-        self.assertIn(
-            "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346",
-            workflow,
-        )
+        self.assertIn("actions/configure-pages@v6", workflow)
+        self.assertIn("actions/upload-pages-artifact@v5", workflow)
+        self.assertIn("actions/deploy-pages@v5", workflow)
         self.assertIn("pages: write", workflow)
         self.assertIn("id-token: write", workflow)
         self.assertNotIn("cad_model_pages.publish", workflow)
-        self.assertNotIn("pages_branch", workflow)
 
     def test_site_uses_accepted_hextra_version(self):
         go_mod = (SITE / "go.mod").read_text(encoding="utf-8")

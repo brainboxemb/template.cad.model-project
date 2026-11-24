@@ -13,7 +13,7 @@ from .config import active_variant_ids, BuildConfigError, discover_models, load_
 
 
 class PublishError(RuntimeError):
-    """Durable build publication failed."""
+    """Build publication failed."""
 
 
 def _run(command: list[str], *, cwd: Path, check: bool = True) -> subprocess.CompletedProcess:
@@ -80,7 +80,7 @@ def _merge_plan(
         return result
 
     if existing.get("schema") != 1 or existing.get("namespace") != candidate.get("namespace"):
-        raise PublishError("existing durable plan is incompatible with candidate scope")
+        raise PublishError("existing build plan is incompatible with candidate scope")
 
     rows = {
         row["id"]: row
@@ -138,11 +138,11 @@ def _prepare_worktree(repo: Path, branch: str, target: Path) -> bool:
     return exists
 
 
-def _copy_model(candidate_scope: Path, durable_scope: Path, model_id: str) -> None:
+def _copy_model(candidate_scope: Path, published_scope: Path, model_id: str) -> None:
     source = candidate_scope / "models" / model_id
     if not source.is_dir():
         raise PublishError(f"missing candidate model output: {source}")
-    target = durable_scope / "models" / model_id
+    target = published_scope / "models" / model_id
     if target.exists():
         shutil.rmtree(target)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -158,23 +158,23 @@ def _update_scope(
     namespace: str,
     full: bool,
 ) -> None:
-    durable_scope = worktree / namespace
-    existing_plan_path = durable_scope / "build-plan.json"
+    published_scope = worktree / namespace
+    existing_plan_path = published_scope / "build-plan.json"
     existing_plan = _read_plan(existing_plan_path) if existing_plan_path.is_file() else None
 
     if full:
-        if durable_scope.exists():
-            shutil.rmtree(durable_scope)
-        shutil.copytree(candidate_scope, durable_scope)
+        if published_scope.exists():
+            shutil.rmtree(published_scope)
+        shutil.copytree(candidate_scope, published_scope)
         _write_plan(
-            durable_scope / "build-plan.json",
+            published_scope / "build-plan.json",
             _merge_plan(None, candidate_plan, active_ids=active_ids, full=True),
         )
         return
 
-    durable_models = durable_scope / "models"
-    if durable_models.is_dir():
-        for child in tuple(durable_models.iterdir()):
+    published_models = published_scope / "models"
+    if published_models.is_dir():
+        for child in tuple(published_models.iterdir()):
             if child.is_dir() and child.name not in active_ids:
                 shutil.rmtree(child)
 
@@ -182,7 +182,7 @@ def _update_scope(
         model_id = row.get("id")
         if not isinstance(model_id, str):
             raise PublishError("candidate plan model is missing id")
-        _copy_model(candidate_scope, durable_scope, model_id)
+        _copy_model(candidate_scope, published_scope, model_id)
 
     merged = _merge_plan(
         existing_plan,
@@ -208,7 +208,7 @@ def publish(
         raise BuildConfigError(f"cannot publish non-permanent namespace {namespace!r}")
     if source_ref != namespace:
         raise PublishError(
-            f"source ref {source_ref!r} must match durable namespace {namespace!r}"
+            f"source ref {source_ref!r} must match build namespace {namespace!r}"
         )
 
     candidate_scope = repo / project.output_root / namespace
@@ -296,9 +296,9 @@ def main(argv=None) -> int:
         full=args.full,
     )
     if commit is None:
-        print("No materialized model output; durable build branch unchanged")
+        print("No materialized model output; build branch unchanged")
     else:
-        print(f"Durable build commit: {commit}")
+        print(f"Build commit: {commit}")
     return 0
 
 
