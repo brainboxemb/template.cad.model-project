@@ -1,11 +1,8 @@
 schema: 1
-branch: fix/forge-0.15-baseline
+branch: fix/91-external-image-references
 
 modules:
-  - build
-models:
-  - simple-box
-
+  - pages
+models: []
 tasks:
   - test
-  - build
