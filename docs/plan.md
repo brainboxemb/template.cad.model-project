@@ -4,7 +4,7 @@ This file contains unfinished work only.
 
 ## Now
 
-### #48 — first durable model page
+### #48 — first model page
 
 Publish `simple-box` through the accepted Hugo 0.169.0 + Hextra v0.13.0
 presentation layer.
@@ -33,7 +33,7 @@ admin setting: **Settings -> Pages -> Source: GitHub Actions**.
 - item-local impact/watch metadata;
 - local merge-policy dispatches target CI and branch cleanup;
 - standalone cleanup removes merged temporary branches;
-- direct Forge -> durable JSON -> one SolidCraft replay batch;
+- direct Forge -> JSON -> one SolidCraft replay batch;
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with implicit primary snapshot;
 - physical model owners may expand into multiple build variants;
