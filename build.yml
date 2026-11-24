@@ -1,7 +1,8 @@
 schema: 1
-branch: feature/primary-snapshot-camera
+branch: feature/model-dependencies
 
 modules:
+  - ci
   - build
 models: []
 
