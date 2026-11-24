@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: read
+      actions: write
     steps:
       - name: Check out source
         uses: actions/checkout@v7
@@ -89,3 +89,8 @@ jobs:
             --source-ref "$SOURCE_REF" \
             --source-sha "$SOURCE_SHA" \
             "${publish_args[@]}"
+
+      - name: Dispatch Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main

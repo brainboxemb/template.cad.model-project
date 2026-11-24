@@ -14,6 +14,7 @@ from .config import ConfigError, ProjectConfig
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _IMPACTS = {"self", "models", "full"}
+_DEFAULT_MODEL_PRIORITY = 1000
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class CadModel:
     builder: str
     source: Path | None = None
     watch: tuple[str, ...] = ()
+    priority: int = _DEFAULT_MODEL_PRIORITY
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -132,14 +134,54 @@ def discover_modules(repo: Path, project: ProjectConfig) -> tuple[PythonModule, 
     return tuple(result)
 
 
+def _group_priorities(root: Path) -> dict[Path, int]:
+    groups: dict[Path, int] = {}
+    for path in sorted(root.rglob("ci.yml")):
+        data = _load(path)
+        if data.get("kind") != "group":
+            continue
+        if set(data) != {"schema", "kind", "priority"}:
+            raise ConfigError(
+                f"group config may contain only schema, kind and priority: {path}"
+            )
+        priority = data.get("priority")
+        if type(priority) is not int or priority < 0:
+            raise ConfigError(f"group priority must be a non-negative integer: {path}")
+        groups[path.parent] = priority
+    return groups
+
+
+def _resolved_group(
+    *,
+    model_root: Path,
+    models_root: Path,
+    groups: dict[Path, int],
+) -> tuple[int, Path | None]:
+    current = model_root.parent
+    while True:
+        if current in groups:
+            return groups[current], current / "ci.yml"
+        if current == models_root:
+            break
+        if models_root not in current.parents:
+            break
+        current = current.parent
+    if models_root in groups:
+        return groups[models_root], models_root / "ci.yml"
+    return _DEFAULT_MODEL_PRIORITY, None
+
+
 def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
     root = repo / project.models_root
+    groups = _group_priorities(root)
     result: list[CadModel] = []
     seen: set[str] = set()
 
     for path in sorted(root.rglob("ci.yml")):
         child = path.parent
         data = _load(path)
+        if data.get("kind") == "group":
+            continue
         process = data.get("process", True)
         if type(process) is not bool:
             raise ConfigError(f"model process must be boolean: {path}")
@@ -157,16 +199,26 @@ def discover_models(repo: Path, project: ProjectConfig) -> tuple[CadModel, ...]:
         source = _validate_model_sources(child, data, path)
 
         relative = child.relative_to(repo).as_posix()
+        priority, group_config = _resolved_group(
+            model_root=child,
+            models_root=root,
+            groups=groups,
+        )
+        watch = list(_watch(data, default=f"{relative}/**", path=path))
+        if group_config is not None:
+            watch.append(group_config.relative_to(repo).as_posix())
+
         result.append(
             CadModel(
                 id=model_id,
                 root=child,
                 builder=builder,
                 source=source,
-                watch=_watch(data, default=f"{relative}/**", path=path),
+                watch=tuple(watch),
+                priority=priority,
             )
         )
-    return tuple(result)
+    return tuple(sorted(result, key=lambda model: (model.priority, model.id)))
 
 
 def select(items, selected_ids: tuple[str, ...] | None):

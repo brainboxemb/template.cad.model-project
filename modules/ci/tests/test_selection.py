@@ -16,7 +16,7 @@ MODELS = (
         Path("models/box"),
         "forge",
         Path("scpf/model.py"),
-        watch=("models/box/**",),
+        watch=("models/box/**", "models/components/ci.yml"),
     ),
     CadModel(
         "plate",
@@ -33,6 +33,17 @@ class SelectionTests(unittest.TestCase):
         result = changed_selection(
             branch="dev",
             paths=("models/box/model.yml",),
+            modules=MODULES,
+            models=MODELS,
+        )
+        self.assertEqual(result.modules, ())
+        self.assertEqual(result.models, ("box",))
+
+
+    def test_changed_group_config_selects_models_in_that_group(self):
+        result = changed_selection(
+            branch="dev",
+            paths=("models/components/ci.yml",),
             modules=MODULES,
             models=MODELS,
         )

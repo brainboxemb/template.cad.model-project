@@ -52,6 +52,14 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-box", workflow)
         self.assertNotIn("simple-mft", workflow)
 
+    def test_pages_publish_jobs_run_only_from_explicit_dispatch(self):
+        workflow = (ROOT / ".github/workflows/pages.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("workflow_run:", workflow)
+        self.assertIn("if: github.event_name == 'workflow_dispatch'", workflow)
+
     def test_pages_workflow_uses_official_artifact_deployment(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"

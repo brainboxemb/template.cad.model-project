@@ -4,25 +4,21 @@ This file contains unfinished work only.
 
 ## Now
 
-### #48 — first model page
+### #47 — model-group ordering before dependencies
 
-Publish `simple-box` through the accepted Hugo 0.169.0 + Hextra v0.13.0
-presentation layer.
+Add directory-level group priorities so model migration/build order can proceed
+from low-level models through components to advanced assemblies.
 
-The page must join:
+Priority is ordering only:
 
-- presentation metadata from `model.yml`;
-- source/build identity from `ci.yml`;
-- accepted artifacts from generated `build/main`.
+```text
+basic / fundamentals   10
+components             20
+advanced / assemblies  30
+```
 
-The shared page layout supports optional model-owned `page.md` prose and
-declarative `extra_views`; it must not contain model-name branches.
-
-Pages is a separate workflow from CAD CI. After a successful `main` or
-`dev` CI run it assembles one deployment with the stable site at `/` and
-the development site at `/dev/`. PR site builds are read-only.
-
-Repository Pages must use **Settings -> Pages -> Source: GitHub Actions**.
+Models inherit the nearest group `ci.yml`; equal priorities sort by owner id.
+Do not add dependency propagation in this issue.
 
 ## Accepted architecture
 
@@ -37,14 +33,12 @@ Repository Pages must use **Settings -> Pages -> Source: GitHub Actions**.
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with implicit primary snapshot;
 - physical model owners may expand into multiple build variants;
-- internal Python capabilities run directly from source.
+- internal Python capabilities run directly from source;
+- Pages runs separately from CAD CI and is explicitly dispatched after build publication;
+- Pages publishes stable `/` and development `/dev/` in one deployment.
 
 ## Next
 
-### #47 — model-group ordering before dependencies
-
-After the first live model page is proven, add simple group priorities so
-basic/component models can be migrated before advanced assemblies.
-
-Priority is ordering only. Add explicit model dependencies later when the first
-migrated assembly provides a concrete selection-propagation case.
+After #47 is accepted, treat this template as the v1 baseline and start
+migrating real CAD models. Add explicit model dependencies only when the first
+advanced/assembly migration supplies a concrete dependency case.

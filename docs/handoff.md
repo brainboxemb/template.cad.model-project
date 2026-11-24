@@ -24,7 +24,7 @@ Core rules:
 - model.yml owns presentation metadata, ci.yml owns build/source identity;
 - optional page.md and extra_views extend a model page without custom
   model-name branches;
-- Pages runs separately from CAD CI and does not block the normal build;
+- Pages runs separately and is dispatched after build publication; CI does not wait for it;
 - one Pages deployment publishes main at `/` and dev at `/dev/`;
 - repository Pages source must be configured as GitHub Actions;
 - model-group priority/dependency work is tracked separately after the first
