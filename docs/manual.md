@@ -130,6 +130,27 @@ snapshots:
 If `snapshots` is omitted, only the standard `model.png` is rendered.
 Additional snapshots may provide their own camera.
 
+A physical model root may own multiple build variants. CI still selects the
+physical owner once; the build plan expands all of its variants:
+
+```yaml
+schema: 1
+id: guide-rail
+builder: forge
+process: true
+
+variants:
+  - id: guide-rail
+    source: scpf/model.py
+  - id: guide-rail-makita
+    source: scpf/makita.py
+```
+
+`source` and `variants` are mutually exclusive. Owner-level `artifacts` and
+`snapshots` apply to every variant. Variant output is stored by variant id,
+while the plan also records the physical owner id.
+
+
 CI selects physical model ids. The build module then performs one repository
 scan and writes a deterministic `build-plan.json`.
 
