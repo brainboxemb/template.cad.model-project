@@ -1,10 +1,11 @@
 from pathlib import Path
+import os
 import unittest
 from unittest.mock import patch
 
 from cad_model_ci.config import BuildSelection, ForgeDependency, ProjectConfig
 from cad_model_ci.items import CadModel, PythonModule
-from cad_model_ci.runner import execute
+from cad_model_ci.runner import build_models, execute, test_module
 
 
 class RunnerTests(unittest.TestCase):
@@ -22,31 +23,44 @@ class RunnerTests(unittest.TestCase):
             output_root=Path("build"),
         )
 
-    @patch("cad_model_ci.runner.build_module")
-    @patch("cad_model_ci.runner.test_module")
-    def test_selected_module_is_the_only_module_tested(
-        self,
-        test_module,
-        build_module,
-    ):
-        selected = (PythonModule("ci", Path("modules/ci")),)
-        execute(
-            repo=Path("."),
-            project=self.project(),
-            selection=BuildSelection("issue/1", ("ci",), (), ("test",)),
-            namespace="dev",
-            modules=selected,
-            models=(),
+    @patch("cad_model_ci.runner._run")
+    def test_module_runs_from_source_without_installing_package(self, run):
+        module = PythonModule("build", Path("modules/build"))
+        test_module(module)
+
+        command = run.call_args.args[0]
+        env = run.call_args.kwargs["env"]
+        self.assertEqual(command[:3], [os.sys.executable, "-m", "unittest"])
+        self.assertIn(str(Path("modules/build/src").resolve()), env["PYTHONPATH"])
+
+    @patch("cad_model_ci.runner._run")
+    def test_model_batch_runs_build_module_from_source(self, run):
+        model = CadModel(
+            id="box",
+            root=Path("models/box"),
+            builder="forge",
+            source=Path("scpf/model.py"),
         )
-        test_module.assert_called_once_with(selected[0])
-        build_module.assert_not_called()
+        build_models(
+            repo=Path("."),
+            build_module_root=Path("modules/build"),
+            namespace="dev",
+            models=(model,),
+        )
+
+        command = run.call_args.args[0]
+        env = run.call_args.kwargs["env"]
+        self.assertEqual(command[:3], [os.sys.executable, "-m", "cad_model_build"])
+        self.assertIn(str(Path("modules/build/src").resolve()), env["PYTHONPATH"])
+        self.assertIn("--model", command)
+        self.assertIn("box", command)
 
     @patch("cad_model_ci.runner.build_models")
-    @patch("cad_model_ci.runner.build_module")
-    def test_build_outputs_are_scoped_below_namespace(
+    @patch("cad_model_ci.runner.test_module")
+    def test_execute_tests_modules_and_builds_models_only(
         self,
-        build_module,
-        build_models,
+        test_module_mock,
+        build_models_mock,
     ):
         module = PythonModule("ci", Path("modules/ci"))
         model = CadModel(
@@ -58,15 +72,20 @@ class RunnerTests(unittest.TestCase):
         execute(
             repo=Path("."),
             project=self.project(),
-            selection=BuildSelection("issue/36", ("ci",), ("box",), ("build",)),
+            selection=BuildSelection(
+                "issue/36",
+                ("ci",),
+                ("box",),
+                ("test", "build"),
+            ),
             namespace="dev",
             modules=(module,),
             models=(model,),
         )
-        build_module.assert_called_once_with(module, Path("build/dev"))
-        build_models.assert_called_once()
-        self.assertEqual(build_models.call_args.kwargs["namespace"], "dev")
-        self.assertEqual(build_models.call_args.kwargs["models"], (model,))
+        test_module_mock.assert_called_once_with(module)
+        build_models_mock.assert_called_once()
+        self.assertEqual(build_models_mock.call_args.kwargs["namespace"], "dev")
+        self.assertEqual(build_models_mock.call_args.kwargs["models"], (model,))
 
 
 if __name__ == "__main__":

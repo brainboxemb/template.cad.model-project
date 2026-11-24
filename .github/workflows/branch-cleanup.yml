@@ -24,12 +24,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Bootstrap branch-cleanup module
-        run: python -m pip install -e modules/branch-cleanup
+      - name: Install runtime dependencies
+        run: python -m pip install PyYAML==6.0.2
 
       - name: Remove merged temporary source branch
         env:
           GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: modules/branch-cleanup/src
         run: >-
           python -m cad_model_branch_cleanup
           --repository "${{ github.repository }}"
@@ -55,12 +56,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Bootstrap branch-cleanup module
-        run: python -m pip install -e modules/branch-cleanup
+      - name: Install runtime dependencies
+        run: python -m pip install PyYAML==6.0.2
 
       - name: Sweep already merged temporary branches
         env:
           GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: modules/branch-cleanup/src
         run: >-
           python -m cad_model_branch_cleanup
           --repository "${{ github.repository }}"

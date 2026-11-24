@@ -1,9 +1,11 @@
 schema: 1
-branch: issue/36-batch-builder
+branch: fix/36-builder-source-invocation
 
 modules:
   - ci
   - build
+  - branch-cleanup
+  - merge-policy
 models:
   - simple-box
 
