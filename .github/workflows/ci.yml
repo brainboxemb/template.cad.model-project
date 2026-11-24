@@ -68,20 +68,10 @@ jobs:
           hugo mod graph | grep -F "github.com/imfing/hextra@v0.13.0"
           hugo --minify --printPathWarnings --destination "$GITHUB_WORKSPACE/generated-site"
           cd "$GITHUB_WORKSPACE"
-
-          require_file() {
-            test -s "$1" || { echo "missing generated Pages file: $1" >&2; exit 1; }
-          }
-
-          require_file generated-site/models/simple-box/index.html
-          require_file generated-site/models/simple-box/model.png
-          require_file generated-site/models/simple-box/model.sc
-          require_file generated-site/models/simple-box/model.step
-          require_file generated-site/models/simple-box/model.stl
-          require_file generated-site/models/simple-box/solidcraft.json
-          grep -F "Simple Box" generated-site/models/simple-box/index.html
-          grep -F "40 × 30 × 10 mm" generated-site/models/simple-box/index.html
-          grep -F "Built in SolidCraft 0.48.1" generated-site/models/simple-box/index.html
+          PYTHONPATH=modules/pages/src python -m cad_model_pages.verify \
+            --repo . \
+            --site generated-site \
+            --build-scope prepared-build/main
 
   durable:
     name: durable
@@ -167,13 +157,10 @@ jobs:
           hugo mod graph | grep -F "github.com/imfing/hextra@v0.13.0"
           hugo --minify --printPathWarnings --destination "$GITHUB_WORKSPACE/generated-site"
           cd "$GITHUB_WORKSPACE"
-
-          test -s generated-site/models/simple-box/index.html
-          test -s generated-site/models/simple-box/model.png
-          test -s generated-site/models/simple-box/model.sc
-          test -s generated-site/models/simple-box/model.step
-          test -s generated-site/models/simple-box/model.stl
-          test -s generated-site/models/simple-box/solidcraft.json
+          PYTHONPATH=modules/pages/src python -m cad_model_pages.verify \
+            --repo . \
+            --site generated-site \
+            --build-scope prepared-build/main
 
       - name: Publish stable Pages branch
         if: github.ref_name == 'main'
