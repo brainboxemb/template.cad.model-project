@@ -127,8 +127,20 @@ Root `ci.yml` pins the complete qualified CAD toolchain:
 - released SolidCraft runtime image and exact SolidCraft version.
 
 Model-local `ci.yml` owns build execution. A minimal processed model declares
-its id and Forge source. The primary `model.png` is always produced with the
-normal SolidCraft snapshot view and therefore needs no model configuration.
+its id and Forge source. The primary `model.png` uses the normal SolidCraft
+snapshot view unless the model explicitly owns a primary review camera.
+
+The primary camera is optional and separate from additional named snapshots:
+
+```yaml
+snapshot:
+  camera:
+    target: [0, 0, 160]
+    yaw: -0.24
+    pitch: 0.20
+    distance: 920
+    fov: 0
+```
 
 Only optional build extras belong in the model config, for example STL or
 additional named snapshots:
@@ -153,8 +165,10 @@ snapshots:
       fov: 0
 ```
 
-If `snapshots` is omitted, only the standard `model.png` is rendered.
-Additional snapshots may provide their own camera.
+If `snapshot` is omitted, the primary `model.png` uses SolidCraft's default
+camera. If `snapshots` is omitted, no additional named PNGs are rendered.
+Additional snapshots may provide their own camera independently of the primary
+snapshot camera.
 
 A physical model root may own multiple build variants. CI still selects the
 physical owner once; the build plan expands all of its variants:
