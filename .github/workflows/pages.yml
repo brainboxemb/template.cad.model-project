@@ -7,13 +7,6 @@ on:
       - ".github/workflows/pages.yml"
       - "site/**"
       - "modules/pages/**"
-      - "models/**/model.yml"
-      - "models/**/page.md"
-      - "models/**/*.svg"
-      - "models/**/*.png"
-      - "models/**/*.jpg"
-      - "models/**/*.jpeg"
-      - "models/**/*.webp"
   workflow_dispatch:
 
 concurrency:
@@ -41,7 +34,7 @@ jobs:
         with:
           ref: build
           path: prepared-build
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Set up Python
@@ -61,10 +54,11 @@ jobs:
       - name: Build and verify Pages
         env:
           PYTHONPATH: modules/pages/src
+          PAGES_SCOPE: ${{ (github.base_ref == 'dev' || github.head_ref == 'dev') && 'dev' || 'main' }}
         run: >-
           python -m cad_model_pages.build
           --source-root .
-          --build-scope prepared-build/main
+          --build-scope prepared-build/$PAGES_SCOPE
           --destination generated-site
           --base-url "https://brainboxemb.github.io/template.cad.model-project/"
           --source-ref "${{ github.event.pull_request.head.sha }}"
@@ -97,7 +91,7 @@ jobs:
         with:
           ref: build
           path: prepared-build
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Set up Python
