@@ -91,3 +91,49 @@ Python.
 ## Output
 
 Generated artifacts remain below root `build/`.
+
+
+## Model builds
+
+Root `ci.yml` pins the complete qualified CAD toolchain:
+
+- Forge repository, version and exact commit;
+- released SolidCraft runtime image and exact SolidCraft version.
+
+Model-local `ci.yml` owns build execution. A minimal processed model declares
+its id, Forge source and optional build extras such as STL or snapshot framing.
+
+CI selects physical model ids. The build module then performs one repository
+scan and writes a deterministic `build-plan.json`.
+
+For every selected model the normal build path is fixed:
+
+```text
+model.py
+  -> pinned Forge on the CI runner
+  -> solidcraft.json
+  -> one shared SolidCraft Docker replay batch
+  -> model.sc
+  -> model.step
+  -> model.png
+  -> optional model.stl / extra PNG snapshots
+```
+
+Forge compilation and SolidCraft replay are separate visible phases. The
+stored `solidcraft.json` is exactly the document replayed by SolidCraft.
+
+Durable output is namespaced by permanent integration target:
+
+```text
+build/
+  dev/
+    build-plan.json
+    models/
+  main/
+    build-plan.json
+    models/
+```
+
+Temporary work branches do not get their own durable output namespace. PRs
+targeting `dev` write below `build/dev`; promotions targeting `main` write
+below `build/main`.
