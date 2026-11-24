@@ -87,20 +87,18 @@ Generic model page adapter.
     ) }}
 
     {{ range $resource := slice
-      (dict "source" (printf "cad-source/%s/model.yml" $modelRoot) "target" "model.yml" "binary" false)
-      (dict "source" (printf "cad-source/%s/ci.yml" $modelRoot) "target" "ci.yml" "binary" false)
-      (dict "source" (printf "cad-source/%s/%s" $modelRoot $sourcePath) "target" "scpf-source.py" "binary" false)
-      (dict "source" (printf "build/models/%s/solidcraft.json" $slug) "target" "solidcraft.json" "binary" false)
-      (dict "source" (printf "build/models/%s/model.png" $slug) "target" "model.png" "binary" false)
-      (dict "source" (printf "build/models/%s/model.sc" $slug) "target" "model.sc" "binary" true)
-      (dict "source" (printf "build/models/%s/model.step" $slug) "target" "model.step" "binary" true)
-      (dict "source" (printf "build/models/%s/model.stl" $slug) "target" "model.stl" "binary" true)
+      (dict "source" (printf "cad-source/%s/model.yml" $modelRoot) "target" "model.yml" "media" "text/plain")
+      (dict "source" (printf "cad-source/%s/ci.yml" $modelRoot) "target" "ci.yml" "media" "text/plain")
+      (dict "source" (printf "cad-source/%s/%s" $modelRoot $sourcePath) "target" "scpf-source.py" "media" "text/plain")
+      (dict "source" (printf "build/models/%s/solidcraft.json" $slug) "target" "solidcraft.json" "media" "application/json")
+      (dict "source" (printf "build/models/%s/model.png" $slug) "target" "model.png" "media" "image/png")
+      (dict "source" (printf "build/models/%s/model.sc" $slug) "target" "model.sc" "media" "application/octet-stream")
+      (dict "source" (printf "build/models/%s/model.step" $slug) "target" "model.step" "media" "application/octet-stream")
+      (dict "source" (printf "build/models/%s/model.stl" $slug) "target" "model.stl" "media" "application/octet-stream")
     }}
       {{ with resources.Get (index $resource "source") }}
-        {{ $mediaType := .MediaType.Type }}
-        {{ if index $resource "binary" }}{{ $mediaType = "application/octet-stream" }}{{ end }}
         {{ $.AddResource (dict
-          "content" (dict "mediaType" $mediaType "value" .Content)
+          "content" (dict "mediaType" (index $resource "media") "value" .Content)
           "path" (printf "%s/%s" $slug (index $resource "target"))
         ) }}
       {{ end }}
