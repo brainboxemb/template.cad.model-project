@@ -4,20 +4,6 @@ This file contains unfinished work only.
 
 ## Now
 
-### #102 — make normal rich-text links visually recognizable
-
-Give ordinary links rendered from model `page.md` content a clear text-link
-appearance in the shared Hugo theme. Keep buttons, cards and reference-image
-links on their existing component-specific styling.
-
-Acceptance:
-
-- `.cad-rich-text a` uses the shared accent color;
-- normal text links are underlined;
-- hover/focus interaction remains explicit;
-- component links that intentionally suppress underlines remain unchanged;
-- site contract tests lock the shared CSS behavior.
-
 ### #97 — use Forge release version and restore local bootstrap
 
 Use the Forge release tag directly as the model-project dependency version.
