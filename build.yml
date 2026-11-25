@@ -1,8 +1,8 @@
 schema: 1
-branch: issue/99-idempotent-merge
+branch: fix/102-rich-text-links
 
 modules:
-  - merge-policy
+  - pages
 models: []
 tasks:
   - test
