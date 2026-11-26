@@ -73,7 +73,11 @@ class PagesVerifyTests(unittest.TestCase):
                         "drawings": [{
                             "name": "Variant A drawing",
                             "drawing": "$drawing_1",
+                            "sheet": "$drawing_1_sheet",
+                            "orientation": "$drawing_1_orientation",
                             "path": "models/variant-a/drawings/Variant-A.pdf",
+                            "preview": "models/variant-a/drawings/Variant-A.png",
+                            "inspect": "models/variant-a/drawings/Variant-A.json",
                         }],
                         "snapshots": [{"name": "top.png", "path": snapshot}],
                     }
@@ -90,6 +94,11 @@ class PagesVerifyTests(unittest.TestCase):
             drawing = build / "models/variant-a/drawings/Variant-A.pdf"
             drawing.parent.mkdir(parents=True, exist_ok=True)
             drawing.write_bytes(b"%PDF-1.7\n")
+            drawing.with_suffix(".png").write_bytes(b"\x89PNG\r\n\x1a\npreview")
+            drawing.with_suffix(".json").write_text(
+                json.dumps({"name": "Variant A drawing"}),
+                encoding="utf-8",
+            )
             snapshot_path = build / snapshot
             snapshot_path.parent.mkdir(parents=True, exist_ok=True)
             snapshot_path.write_bytes(b"x")
@@ -113,7 +122,8 @@ class PagesVerifyTests(unittest.TestCase):
                 f"{blob}{native['step']} · "
                 f"{blob}{native['stl']} · "
                 f"{blob}models/variant-a/drawings/Variant-A.pdf · "
-                f"{raw}models/variant-a/drawings/Variant-A.pdf",
+                f"{raw}models/variant-a/drawings/Variant-A.pdf · "
+                f"{raw}models/variant-a/drawings/Variant-A.png",
                 encoding="utf-8",
             )
 

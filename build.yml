@@ -1,11 +1,9 @@
 schema: 1
-branch: chore/109-refresh-toolchain-baseline
+branch: feature/107-static-drawing-previews
 
 modules:
   - build
-  - ci
-models:
-  - simple-box
+  - pages
+models: []
 tasks:
   - test
-  - build
