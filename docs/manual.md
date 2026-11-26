@@ -272,6 +272,7 @@ model.py
   -> model.step
   -> model.png
   -> optional model.stl / extra PNG snapshots
+  -> optional native drawings/*.pdf declared by Forge
 ```
 
 Forge compilation and SolidCraft replay are separate visible phases. The
@@ -309,6 +310,13 @@ active. A full `main` build replaces the complete `main/` scope.
 Publication uses normal non-force pushes and checks that the source branch still
 points at the source SHA being published.
 
+Forge may declare native drawing artifacts in the compiled command document.
+The model-project contract requires `name`, replay-bound `drawing`, and a
+safe relative `pdf` path. Forge may add metadata such as sheet identity,
+orientation, preview/inspection paths or expected drawing properties without
+breaking the consumer. The build plan projects only the PDF fields it consumes,
+and SolidCraft exports the vector PDF from the saved native design.
+
 ## Pages
 
 Stable Pages use Hugo 0.169.0 with Hextra v0.13.0.
@@ -330,13 +338,14 @@ its matching build plan before the combined generated site is published.
 
 `model.yml` owns presentation text. `ci.yml` owns source/variant identity.
 The generated `build/main` / `build/dev` scopes own JSON, SC, STEP, PNG,
-optional STL and model-owned snapshot images.
+optional STL, model-owned snapshot images and native drawing PDFs declared by Forge.
 
 Model pages link directly to those durable artifacts:
 
 - normal GitHub `blob/build/<scope>/...` URLs for inspection and downloads;
 - raw GitHub build URLs for inline preview images and SolidCraft Web input;
-- STL blob URLs open in GitHub's native 3D viewer.
+- STL blob URLs open in GitHub's native 3D viewer;
+- native drawing PDFs are previewed/linked directly from the durable build scope.
 
 Only source-owned presentation resources such as `page.md` and declared local
 reference assets are copied into the generated site.

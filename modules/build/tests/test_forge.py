@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from cad_model_build.forge import compile_plan, install_url
+from cad_model_build.forge import _drawing_artifacts, compile_plan, install_url
 
 
 class ForgeBuildTests(unittest.TestCase):
@@ -13,6 +13,59 @@ class ForgeBuildTests(unittest.TestCase):
             "@v0.15.0#subdirectory=scpf",
             install_url("brainboxemb/lib.py.solidcraft.forge", version),
         )
+
+    def test_drawing_artifact_accepts_legacy_and_additive_metadata(self):
+        legacy = {
+            "artifacts": {
+                "drawings": [{
+                    "name": "Part",
+                    "drawing": "$drawing_1",
+                    "pdf": "drawings/Part.pdf",
+                }]
+            }
+        }
+        additive = {
+            "artifacts": {
+                "drawings": [{
+                    "name": "Part",
+                    "drawing": "$drawing_1",
+                    "sheet": "$drawing_1_sheet",
+                    "orientation": "$drawing_1_orientation",
+                    "pdf": "drawings/Part.pdf",
+                    "png": "drawings/Part.png",
+                    "inspect": "drawings/Part.json",
+                    "expected": {"orientation": "landscape"},
+                }]
+            }
+        }
+        expected = [{
+            "name": "Part",
+            "drawing": "$drawing_1",
+            "path": "models/box/drawings/Part.pdf",
+        }]
+        self.assertEqual(
+            _drawing_artifacts(legacy, "models/box/solidcraft.json"),
+            expected,
+        )
+        self.assertEqual(
+            _drawing_artifacts(additive, "models/box/solidcraft.json"),
+            expected,
+        )
+
+    def test_drawing_artifact_rejects_missing_fields_and_escape(self):
+        for artifact in (
+            {"name": "Part", "drawing": "$drawing_1"},
+            {
+                "name": "Part",
+                "drawing": "$drawing_1",
+                "pdf": "../Part.pdf",
+            },
+        ):
+            with self.assertRaisesRegex(RuntimeError, "invalid Forge drawing artifact"):
+                _drawing_artifacts(
+                    {"artifacts": {"drawings": [artifact]}},
+                    "models/box/solidcraft.json",
+                )
 
     @patch("cad_model_build.forge.subprocess.run")
     def test_compile_plan_writes_each_solidcraft_json(self, run):
@@ -37,7 +90,10 @@ class ForgeBuildTests(unittest.TestCase):
             def fake_run(command, **kwargs):
                 target = Path(command[-1])
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_text("{}\n", encoding="utf-8")
+                target.write_text(
+                    '{"commands": [], "artifacts": {"drawings": []}}\n',
+                    encoding="utf-8",
+                )
 
             run.side_effect = fake_run
             compile_plan(repo=root, output_root=output, plan=plan, wheel=wheel)

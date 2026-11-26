@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from cad_model_build.runtime import _snapshot
+from cad_model_build.runtime import _export_drawings, _snapshot
 
 
 class SnapshotRuntimeTests(unittest.TestCase):
@@ -57,6 +57,58 @@ class SnapshotRuntimeTests(unittest.TestCase):
 
             command = run.call_args.args[0]
             self.assertIn("--camera", command)
+
+    @patch("cad_model_build.runtime.subprocess.run")
+    def test_drawing_export_uses_replay_bound_native_drawing(self, run):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            saved = root / "models/part/model.sc"
+            saved.parent.mkdir(parents=True)
+            saved.write_bytes(b"sc")
+            work = root / "work"
+            work.mkdir()
+            row = {
+                "id": "part",
+                "drawings": [{
+                    "name": "Part",
+                    "drawing": "$drawing_1",
+                    "path": "models/part/drawings/Part.pdf",
+                }],
+            }
+            document = {
+                "artifacts": {
+                    "drawings": [{
+                        "name": "Part",
+                        "drawing": "$drawing_1",
+                        "sheet": "$drawing_1_sheet",
+                        "pdf": "drawings/Part.pdf",
+                        "expected": {},
+                    }]
+                }
+            }
+
+            def fake_run(command, **kwargs):
+                script = Path(command[2])
+                payload = __import__("json").loads(script.read_text())
+                export = next(
+                    item for item in payload["commands"]
+                    if item["command"] == "drawing.export"
+                )
+                Path(export["params"]["path"]).write_bytes(b"%PDF-1.7\n")
+
+            run.side_effect = fake_run
+            produced = _export_drawings(
+                document=document,
+                row=row,
+                variables={"$drawing_1": "D1"},
+                saved=saved,
+                output_root=root,
+                work_dir=work,
+            )
+            self.assertEqual(
+                produced,
+                (root / "models/part/drawings/Part.pdf",),
+            )
 
 
 if __name__ == "__main__":
