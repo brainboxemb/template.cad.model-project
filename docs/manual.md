@@ -258,7 +258,44 @@ Additional snapshots may provide their own camera independently of the primary
 snapshot camera.
 
 A physical model root may own multiple build variants. CI still selects the
-physical owner once; the build plan expands all of its variants:
+physical owner once; the build plan expands all of its variants. Pages presents
+such a root as one physical owner with its build variants underneath it. Existing
+variant detail URLs remain stable.
+
+Owner-level presentation metadata is optional. When supplied, it controls the
+family page and catalog card while `variants` continues to own each variant's
+detail metadata:
+
+```yaml
+title: Guide Rail
+tagline: Guide-rail family with multiple interface profiles
+description: Shared guide-rail component family.
+variant_groups:
+  - title: Standard
+    variants: [guide-rail]
+  - title: Alternatives
+    variants: [guide-rail-makita]
+
+variants:
+  guide-rail:
+    title: Guide Rail
+    tagline: Standard profile
+    description: Standard guide-rail profile.
+    parameters: 800 mm
+  guide-rail-makita:
+    title: Guide Rail — Makita
+    tagline: Makita profile
+    description: Makita-compatible profile.
+    parameters: 800 mm
+```
+
+`variant_groups` is presentation-only and follows variant ids from `ci.yml`.
+A variant may appear in at most one declared group. Variants not listed in a
+group remain visible under `Other variants`. If owner-level title/tagline/
+description are omitted, Pages falls back deterministically to the first
+declared build variant.
+
+The build configuration remains:
 
 ```yaml
 schema: 1
