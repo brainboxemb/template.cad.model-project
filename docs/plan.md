@@ -4,6 +4,13 @@ This file contains unfinished work only.
 
 ## Now
 
+### #111 — make STL export quality explicit and adapter-owned
+
+Keep `artifacts: [stl]` backward compatible as a generic STL request with no
+quality override. Allow an optional explicit STL quality in model-local
+`ci.yml`; carry only explicit quality intent into the build plan and let the
+active CAD-engine adapter own default behavior and native option mapping.
+
 ### #97 — use Forge release version and restore local bootstrap
 
 Use the Forge release tag directly as the model-project dependency version.

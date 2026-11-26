@@ -234,6 +234,26 @@ snapshots:
 
 If `snapshot` is omitted, the primary `model.png` uses SolidCraft's default
 camera. If `snapshots` is omitted, no additional named PNGs are rendered.
+
+STL export intent remains tool-independent. The shorthand
+
+```yaml
+artifacts: [stl]
+```
+
+requests an STL without selecting an engine-specific mesh quality. The active
+runtime adapter owns its default behavior. A model that deliberately needs a
+specific quality may use the extended form:
+
+```yaml
+artifacts:
+  stl:
+    quality: fine
+```
+
+The build plan carries that quality only when it is explicit. The SolidCraft
+adapter translates the generic hint to SolidCraft's native `--quality`
+option; `model.yml` and model source never contain SolidCraft CLI flags.
 Additional snapshots may provide their own camera independently of the primary
 snapshot camera.
 

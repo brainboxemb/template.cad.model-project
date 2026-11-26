@@ -1,9 +1,10 @@
 schema: 1
-branch: feature/107-static-drawing-previews
+branch: feature/111-stl-export-quality
 
 modules:
   - build
-  - pages
-models: []
+models:
+  - simple-box
 tasks:
   - test
+  - build
