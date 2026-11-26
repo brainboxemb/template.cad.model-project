@@ -1,10 +1,8 @@
 schema: 1
-branch: feature/111-stl-export-quality
+branch: issue/113-snapshot-presentation-view
 
 modules:
   - build
-models:
-  - simple-box
+models: []
 tasks:
   - test
-  - build
