@@ -1,8 +1,8 @@
 schema: 1
-branch: issue/113-snapshot-presentation-view
+branch: feature/115-owner-first-variant-pages
 
 modules:
-  - build
+  - pages
 models: []
 tasks:
   - test

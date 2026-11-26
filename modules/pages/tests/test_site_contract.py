@@ -77,6 +77,44 @@ class SiteContractTests(unittest.TestCase):
             self.assertIn(f'name = "{name}"', menu)
         self.assertIn("Updated {{ $page.Lastmod.Format", card)
 
+    def test_owner_first_variant_navigation_contract(self):
+        adapter = (SITE / "content/models/_content.gotmpl").read_text(
+            encoding="utf-8"
+        )
+        catalog = (SITE / "layouts/models/list.html").read_text(
+            encoding="utf-8"
+        )
+        home = (SITE / "layouts/home.html").read_text(encoding="utf-8")
+        page = (SITE / "layouts/models/single.html").read_text(encoding="utf-8")
+        card = (SITE / "layouts/partials/cad/model-card.html").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('"cadOwnerIndex" true', adapter)
+        self.assertIn('"catalogEntry" true', adapter)
+        self.assertIn('"catalogEntry" (not $hasOwnerPage)', adapter)
+        self.assertIn('"ownerVariantIds" $variantIds', adapter)
+        self.assertIn('index $rootMeta "variant_groups"', adapter)
+        self.assertIn('printf "owners/%s" $modelRoot', adapter)
+        self.assertIn('"cadOwnerPath" $ownerPath', adapter)
+        self.assertIn('"cadOwnerTitle" $ownerTitle', adapter)
+        self.assertIn('"cadVariant" true', adapter)
+
+        self.assertIn('"Params.catalogEntry" true', catalog)
+        self.assertIn('"Params.catalogEntry" true', home)
+        self.assertIn(".Params.cadOwnerIndex", page)
+        self.assertIn(".Params.ownerVariantIds", page)
+        self.assertIn(".Params.variantGroups", page)
+        self.assertIn(".Params.cadOwnerPath", page)
+        self.assertIn("Other variants", page)
+        self.assertIn("Physical owner", page)
+        self.assertIn("$page.Params.cadOwnerIndex", card)
+        self.assertIn("$page.Params.ownerVariantIds", card)
+
+        for shared in (adapter, catalog, home, page, card):
+            self.assertNotIn("hub75", shared.lower())
+            self.assertNotIn("guide-rail", shared.lower())
+
     def test_pages_build_passes_durable_scope_to_hugo(self):
         build = (ROOT / "modules/pages/src/cad_model_pages/build.py").read_text(
             encoding="utf-8"
