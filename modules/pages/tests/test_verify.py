@@ -70,6 +70,11 @@ class PagesVerifyTests(unittest.TestCase):
                         "root": "models/component-a",
                         "commands": commands,
                         "native": native,
+                        "drawings": [{
+                            "name": "Variant A drawing",
+                            "drawing": "$drawing_1",
+                            "path": "models/variant-a/drawings/Variant-A.pdf",
+                        }],
                         "snapshots": [{"name": "top.png", "path": snapshot}],
                     }
                 ],
@@ -82,6 +87,9 @@ class PagesVerifyTests(unittest.TestCase):
                 target = build / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(b"x")
+            drawing = build / "models/variant-a/drawings/Variant-A.pdf"
+            drawing.parent.mkdir(parents=True, exist_ok=True)
+            drawing.write_bytes(b"%PDF-1.7\n")
             snapshot_path = build / snapshot
             snapshot_path.parent.mkdir(parents=True, exist_ok=True)
             snapshot_path.write_bytes(b"x")
@@ -103,11 +111,24 @@ class PagesVerifyTests(unittest.TestCase):
                 f"{raw}{native['png']} · "
                 f"{blob}{native['sc']} · "
                 f"{blob}{native['step']} · "
-                f"{blob}{native['stl']}",
+                f"{blob}{native['stl']} · "
+                f"{blob}models/variant-a/drawings/Variant-A.pdf · "
+                f"{raw}models/variant-a/drawings/Variant-A.pdf",
                 encoding="utf-8",
             )
 
             verify(repo=repo, site=site, build_scope=build)
+
+            duplicate_drawing = page / "drawings/Variant-A.pdf"
+            duplicate_drawing.parent.mkdir(parents=True)
+            duplicate_drawing.write_bytes(b"%PDF-1.7\n")
+            with self.assertRaisesRegex(
+                PagesVerificationError,
+                "drawing PDF duplicated in Pages",
+            ):
+                verify(repo=repo, site=site, build_scope=build)
+            duplicate_drawing.unlink()
+            duplicate_drawing.parent.rmdir()
 
             (page / "model.stl").write_bytes(b"duplicate")
             with self.assertRaisesRegex(
