@@ -1,9 +1,11 @@
 schema: 1
-branch: feature/104-native-drawing-artifacts
+branch: chore/109-refresh-toolchain-baseline
 
 modules:
   - build
-  - pages
-models: []
+  - ci
+models:
+  - simple-box
 tasks:
   - test
+  - build
