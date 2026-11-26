@@ -141,9 +141,30 @@ def verify(*, repo: Path, site: Path, build_scope: Path) -> None:
             raise PagesVerificationError(
                 f"{model_path}: unsupported category {category!r}"
             )
-        if f"/models/{variant_id}/" not in category_html[category]:
+        owner_variant_ids = [
+            candidate.get("id")
+            for candidate in rows
+            if isinstance(candidate, dict) and candidate.get("root") == model_root
+        ]
+        has_owner_page = len(owner_variant_ids) > 1
+        owner_href = None
+        owner_page_path = None
+        if has_owner_page:
+            try:
+                owner_rel = Path(model_root).relative_to("models")
+            except ValueError as exc:
+                raise PagesVerificationError(
+                    f"{model_path}: model owner is outside models/"
+                ) from exc
+            owner_href = f"/models/owners/{owner_rel.as_posix()}/"
+            owner_page_path = site / "models" / "owners" / owner_rel / "index.html"
+            expected_catalog_href = owner_href
+        else:
+            expected_catalog_href = f"/models/{variant_id}/"
+
+        if expected_catalog_href not in category_html[category]:
             raise PagesVerificationError(
-                f"{category}: missing model link for {variant_id}"
+                f"{category}: missing model-owner link for {variant_id}"
             )
 
         metadata = _metadata_for_variant(root_metadata, variant_id, model_path)
@@ -158,6 +179,20 @@ def verify(*, repo: Path, site: Path, build_scope: Path) -> None:
         page_path = page_root / "index.html"
         _require_file(page_path)
         html = page_path.read_text(encoding="utf-8")
+        if has_owner_page:
+            assert owner_href is not None
+            assert owner_page_path is not None
+            _require_file(owner_page_path)
+            owner_html = owner_page_path.read_text(encoding="utf-8")
+            if f"/models/{variant_id}/" not in owner_html:
+                raise PagesVerificationError(
+                    f"{owner_page_path}: missing variant link for {variant_id}"
+                )
+            if owner_href not in html:
+                raise PagesVerificationError(
+                    f"{page_path}: missing physical-owner back link"
+                )
+
         for expected in (
             title,
             parameters,

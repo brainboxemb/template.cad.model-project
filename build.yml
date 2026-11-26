@@ -1,5 +1,5 @@
 schema: 1
-branch: feature/115-owner-first-variant-pages
+branch: fix/115-owner-aware-pages-verification
 
 modules:
   - pages

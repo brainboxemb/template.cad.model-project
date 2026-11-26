@@ -148,5 +148,143 @@ class PagesVerifyTests(unittest.TestCase):
                 verify(repo=repo, site=site, build_scope=build)
 
 
+    def test_verifies_multi_variant_owner_catalog_and_detail_links(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            site = root / "site"
+            build = root / "dev"
+            model = repo / "models" / "component-a"
+            model.mkdir(parents=True)
+            build.mkdir(parents=True)
+
+            config = repo / "site/config/_default"
+            config.mkdir(parents=True)
+            (config / "hugo.toml").write_text(
+                '[params]\ncadSourceRepository = "example/cad"\n',
+                encoding="utf-8",
+            )
+
+            (site / "index.html").parent.mkdir(parents=True, exist_ok=True)
+            (site / "index.html").write_text(
+                "home · Recently updated models",
+                encoding="utf-8",
+            )
+            (site / "models/index.html").parent.mkdir(parents=True, exist_ok=True)
+            (site / "models/index.html").write_text(
+                "Basic Models · Components · Advanced Models",
+                encoding="utf-8",
+            )
+            owner_href = "/models/owners/component-a/"
+            for category in ("basic", "components", "advanced"):
+                category_page = site / "models" / category
+                category_page.mkdir(parents=True)
+                link = (
+                    f'<a href="{owner_href}">Component A</a>'
+                    if category == "components"
+                    else ""
+                )
+                (category_page / "index.html").write_text(
+                    f'<main class="cad-category-page">'
+                    f'<div class="cad-model-grid">{link}</div></main>',
+                    encoding="utf-8",
+                )
+
+            (model / "model.yml").write_text(
+                """section: components
+title: Component A
+variants:
+  variant-a:
+    title: Variant A
+    parameters: 10 × 20 mm
+  variant-b:
+    title: Variant B
+    parameters: 20 × 30 mm
+""",
+                encoding="utf-8",
+            )
+
+            rows = []
+            blob = "https://github.com/example/cad/blob/build/dev/"
+            raw = "https://raw.githubusercontent.com/example/cad/build/dev/"
+            for variant_id, title, parameters in (
+                ("variant-a", "Variant A", "10 × 20 mm"),
+                ("variant-b", "Variant B", "20 × 30 mm"),
+            ):
+                native = {
+                    "png": f"models/{variant_id}/model.png",
+                    "sc": f"models/{variant_id}/model.sc",
+                    "step": f"models/{variant_id}/model.step",
+                }
+                commands = f"models/{variant_id}/solidcraft.json"
+                rows.append(
+                    {
+                        "id": variant_id,
+                        "root": "models/component-a",
+                        "commands": commands,
+                        "native": native,
+                        "drawings": [],
+                        "snapshots": [],
+                    }
+                )
+                for path in native.values():
+                    target = build / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(b"x")
+                command_path = build / commands
+                command_path.parent.mkdir(parents=True, exist_ok=True)
+                command_path.write_text(
+                    json.dumps({"commands": [{"command": "Part::Box"}]}),
+                    encoding="utf-8",
+                )
+
+                page = site / "models" / variant_id
+                page.mkdir(parents=True)
+                for name in ("scpf-source.py", "model.yml", "ci.yml"):
+                    (page / name).write_text("source", encoding="utf-8")
+                (page / "index.html").write_text(
+                    f"{title} · {parameters} · "
+                    "Built in SolidCraft 0.48.1 · <code>dev</code> · "
+                    f"{owner_href} · "
+                    f"{blob}{commands} · "
+                    f"{raw}{native['png']} · "
+                    f"{blob}{native['sc']} · "
+                    f"{blob}{native['step']}",
+                    encoding="utf-8",
+                )
+
+            plan = {
+                "schema": 1,
+                "namespace": "dev",
+                "solidcraft": {"version": "0.48.1"},
+                "models": rows,
+            }
+            (build / "build-plan.json").write_text(
+                json.dumps(plan),
+                encoding="utf-8",
+            )
+
+            owner = site / "models" / "owners" / "component-a"
+            owner.mkdir(parents=True)
+            owner_html = (
+                '<a href="/models/variant-a/">Variant A</a>'
+                '<a href="/models/variant-b/">Variant B</a>'
+            )
+            (owner / "index.html").write_text(owner_html, encoding="utf-8")
+
+            verify(repo=repo, site=site, build_scope=build)
+
+            (owner / "index.html").write_text(
+                '<a href="/models/variant-a/">Variant A</a>',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                PagesVerificationError,
+                "missing variant link for variant-b",
+            ):
+                verify(repo=repo, site=site, build_scope=build)
+
+
+
 if __name__ == "__main__":
     unittest.main()
