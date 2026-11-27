@@ -11,7 +11,13 @@ from .native import run_native_batch
 from .plan import resolve_plan, write_plan
 
 
-def execute(*, repo: Path, namespace: str, selected_ids: tuple[str, ...]) -> Path:
+def execute(
+    *,
+    repo: Path,
+    namespace: str,
+    selected_ids: tuple[str, ...],
+    forge_ref: str | None = None,
+) -> Path:
     repo = repo.resolve()
     project = load_project(repo)
     models = discover_models(repo, project)
@@ -21,6 +27,7 @@ def execute(*, repo: Path, namespace: str, selected_ids: tuple[str, ...]) -> Pat
         models=models,
         selected_ids=selected_ids,
         namespace=namespace,
+        forge_ref=forge_ref,
     )
 
     output_root = repo / project.output_root / namespace
@@ -29,11 +36,16 @@ def execute(*, repo: Path, namespace: str, selected_ids: tuple[str, ...]) -> Pat
         return plan_path
 
     with tempfile.TemporaryDirectory(prefix="cad-model-forge-") as tmp:
-        wheel = build_wheel(project.forge, Path(tmp))
+        wheel = build_wheel(
+            project.forge,
+            Path(tmp),
+            qualification_ref=forge_ref,
+        )
         qualified = tested_solidcraft_version(wheel)
         if qualified != project.solidcraft.version:
             raise RuntimeError(
-                f"Forge {project.forge.version} qualifies SolidCraft {qualified}, "
+                f"Forge {forge_ref or project.forge.version} qualifies "
+                f"SolidCraft {qualified}, "
                 f"but ci.yml pins {project.solidcraft.version}"
             )
 
