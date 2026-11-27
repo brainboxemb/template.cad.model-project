@@ -4,6 +4,13 @@ This file contains unfinished work only.
 
 ## Now
 
+### #122 — digest-pinned runtime candidates on work branches
+
+Keep permanent SolidCraft pins release-only while allowing a matching temporary
+`build.yml` to qualify selected model builds against one immutable OCI-digest
+runtime candidate. Candidate replay must not weaken the released Forge/baseline
+version guard and must never publish permanent output.
+
 ### #111 — make STL export quality explicit and adapter-owned
 
 Keep `artifacts: [stl]` backward compatible as a generic STL request with no

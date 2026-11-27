@@ -1,8 +1,9 @@
 schema: 1
-branch: issue/120-process-false-explicit-build
+branch: issue/122-runtime-candidate
 
 modules:
   - ci
+  - build
 models: []
 tasks:
   - test
