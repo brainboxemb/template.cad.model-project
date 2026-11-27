@@ -1,9 +1,9 @@
 schema: 1
-branch: issue/125-main-governance-policy
+branch: issue/130-forge-qualification-ref
 
 modules:
-  - merge-policy
-  - branch-cleanup
+  - ci
+  - build
 models: []
 tasks:
   - test
