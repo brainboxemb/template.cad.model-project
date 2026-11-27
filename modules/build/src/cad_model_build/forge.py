@@ -1,4 +1,4 @@
-"""Prepare one released Forge version and compile all planned models."""
+"""Prepare released Forge or one exact qualification commit and compile models."""
 
 from __future__ import annotations
 
