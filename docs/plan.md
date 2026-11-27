@@ -4,19 +4,18 @@ This file contains unfinished work only.
 
 ## Now
 
-### #88 — upgrade Forge baseline to v0.15.0
+### #111 — make STL export quality explicit and adapter-owned
 
-The template must track the accepted Forge baseline used by the current CAD
-repository. Forge v0.15.0 fixes component-context restoration during headless
-replay (#753), preventing component-local joined Cylinder tool geometry from
-remaining visible in root/world space.
+Keep `artifacts: [stl]` backward compatible as a generic STL request with no
+quality override. Allow an optional explicit STL quality in model-local
+`ci.yml`; carry only explicit quality intent into the build plan and let the
+active CAD-engine adapter own default behavior and native option mapping.
 
-Accepted pin:
+### #97 — use Forge release version and restore local bootstrap
 
-- Forge v0.15.0
-- commit `efc88bfcaf452051d721347f2e5ca561decad654`
-- SolidCraft 0.48.1
-- runtime `ghcr.io/brainboxemb/cad-solidcraft:v0.3.5`
+Use the Forge release tag directly as the model-project dependency version.
+Remove the redundant SHA pin and add a root `bootstrap.ps1` that installs the
+same released version used by CI.
 
 ## Accepted architecture
 
@@ -27,10 +26,13 @@ Accepted pin:
 - item-local impact/watch metadata;
 - directory-local model build priority;
 - explicit physical-model dependency graph for assembly impact;
+- `process: false` keeps a model owner discoverable and explicitly selectable
+  on a matching work branch while excluding it from automatic/full permanent-lane
+  model selection and automatic dependent expansion;
 - local merge-policy owns all source-branch integration and dispatches target CI;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;
-- Forge v0.15.0 / SolidCraft 0.48.1 baseline;
+- Forge v0.19.0 / SolidCraft 0.49.0 / runtime v0.3.6 baseline;
 - generated `build` branch with `dev/` and `main/` scopes;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
@@ -39,5 +41,4 @@ Accepted pin:
 
 ## Next
 
-Accept #88 through local `/merge`, promote it to `main`, then sync the exact
-toolchain pin to the active CAD repository and rebuild `hub75-screen`.
+Complete #97 against the current released Forge baseline.

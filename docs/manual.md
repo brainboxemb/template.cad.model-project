@@ -3,7 +3,30 @@
 ## Stable configuration
 
 Root `ci.yml` defines permanent source branches, the generated build branch,
-exact Forge/SolidCraft pins and repository roots.
+Forge/SolidCraft versions and repository roots. Forge is selected by its
+released Git tag, for example `version: v0.15.0`. Local bootstrap and CI use
+that same release version.
+
+## Local bootstrap
+
+Run the repository bootstrap once after cloning or whenever the pinned Forge
+release changes:
+
+```powershell
+.\bootstrap.ps1
+```
+
+The bootstrap reads `dependencies.forge.version` from root `ci.yml`,
+installs SCPF directly from that release tag and checks the installed package
+version plus the SolidCraft version qualified by that Forge release.
+
+After bootstrap, models can be sent directly to an open SolidCraft GUI:
+
+```powershell
+python -m scpf models/advanced/simple_mft_assembly/scpf/model.py --connect --new
+```
+
+No Forge SHA is part of the normal model-project workflow.
 
 ## Branch integration
 
@@ -21,6 +44,10 @@ the PR and selects the merge method.
 Agents must never call GitHub's direct merge API, enable auto-merge, use the UI
 merge button as a fallback, or manually choose squash/merge/rebase. If the
 `/merge` path fails, fix that path instead of bypassing it.
+
+Repeating `/merge` after the pull request has already been merged is an
+idempotent successful no-op. A pull request that is closed without being merged
+is still rejected.
 
 The merge-policy owns:
 
@@ -163,7 +190,7 @@ Generated artifacts remain below root `build/`.
 
 Root `ci.yml` pins the complete qualified CAD toolchain:
 
-- Forge repository, version and exact commit;
+- Forge repository and released version tag;
 - released SolidCraft runtime image and exact SolidCraft version.
 
 Model-local `ci.yml` owns build execution. A minimal processed model declares
@@ -207,11 +234,68 @@ snapshots:
 
 If `snapshot` is omitted, the primary `model.png` uses SolidCraft's default
 camera. If `snapshots` is omitted, no additional named PNGs are rendered.
+
+STL export intent remains tool-independent. The shorthand
+
+```yaml
+artifacts: [stl]
+```
+
+requests an STL without selecting an engine-specific mesh quality. The active
+runtime adapter owns its default behavior. A model that deliberately needs a
+specific quality may use the extended form:
+
+```yaml
+artifacts:
+  stl:
+    quality: fine
+```
+
+The build plan carries that quality only when it is explicit. The SolidCraft
+adapter translates the generic hint to SolidCraft's native `--quality`
+option; `model.yml` and model source never contain SolidCraft CLI flags.
 Additional snapshots may provide their own camera independently of the primary
 snapshot camera.
 
 A physical model root may own multiple build variants. CI still selects the
-physical owner once; the build plan expands all of its variants:
+physical owner once; the build plan expands all of its variants. Pages presents
+such a root as one physical owner with its build variants underneath it. Existing
+variant detail URLs remain stable.
+
+Owner-level presentation metadata is optional. When supplied, it controls the
+family page and catalog card while `variants` continues to own each variant's
+detail metadata:
+
+```yaml
+title: Guide Rail
+tagline: Guide-rail family with multiple interface profiles
+description: Shared guide-rail component family.
+variant_groups:
+  - title: Standard
+    variants: [guide-rail]
+  - title: Alternatives
+    variants: [guide-rail-makita]
+
+variants:
+  guide-rail:
+    title: Guide Rail
+    tagline: Standard profile
+    description: Standard guide-rail profile.
+    parameters: 800 mm
+  guide-rail-makita:
+    title: Guide Rail — Makita
+    tagline: Makita profile
+    description: Makita-compatible profile.
+    parameters: 800 mm
+```
+
+`variant_groups` is presentation-only and follows variant ids from `ci.yml`.
+A variant may appear in at most one declared group. Variants not listed in a
+group remain visible under `Other variants`. If owner-level title/tagline/
+description are omitted, Pages falls back deterministically to the first
+declared build variant.
+
+The build configuration remains:
 
 ```yaml
 schema: 1
@@ -245,6 +329,7 @@ model.py
   -> model.step
   -> model.png
   -> optional model.stl / extra PNG snapshots
+  -> optional native drawings/*.pdf declared by Forge
 ```
 
 Forge compilation and SolidCraft replay are separate visible phases. The
@@ -282,6 +367,13 @@ active. A full `main` build replaces the complete `main/` scope.
 Publication uses normal non-force pushes and checks that the source branch still
 points at the source SHA being published.
 
+Forge may declare native drawing artifacts in the compiled command document.
+The model-project contract requires `name`, replay-bound `drawing`, and a
+safe relative `pdf` path. Forge may add metadata such as sheet identity,
+orientation, preview/inspection paths or expected drawing properties without
+breaking the consumer. The build plan projects only the PDF fields it consumes,
+and SolidCraft exports the vector PDF from the saved native design.
+
 ## Pages
 
 Stable Pages use Hugo 0.169.0 with Hextra v0.13.0.
@@ -303,13 +395,14 @@ its matching build plan before the combined generated site is published.
 
 `model.yml` owns presentation text. `ci.yml` owns source/variant identity.
 The generated `build/main` / `build/dev` scopes own JSON, SC, STEP, PNG,
-optional STL and model-owned snapshot images.
+optional STL, model-owned snapshot images and native drawing PDFs declared by Forge.
 
 Model pages link directly to those durable artifacts:
 
 - normal GitHub `blob/build/<scope>/...` URLs for inspection and downloads;
 - raw GitHub build URLs for inline preview images and SolidCraft Web input;
-- STL blob URLs open in GitHub's native 3D viewer.
+- STL blob URLs open in GitHub's native 3D viewer;
+- native drawing PDFs are previewed/linked directly from the durable build scope.
 
 Only source-owned presentation resources such as `page.md` and declared local
 reference assets are copied into the generated site.

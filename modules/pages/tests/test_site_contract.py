@@ -24,6 +24,14 @@ class SiteContractTests(unittest.TestCase):
         self.assertIn('resources.Get (printf "cad-source/%s/ci.yml"', adapter)
         self.assertIn('resources.Get "build/build-plan.json"', adapter)
         self.assertIn('index $ci "variants"', adapter)
+        self.assertIn('if isset $ci "process"', adapter)
+        self.assertIn('$process = index $ci "process"', adapter)
+        self.assertIn('if not $process', adapter)
+        self.assertIn('{{ continue }}', adapter)
+        self.assertLess(
+            adapter.index('if isset $ci "process"'),
+            adapter.index('index $ci "variants"'),
+        )
         self.assertIn('where $rows "id" $slug', adapter)
         self.assertIn("hugo.Data.cad.model_history", adapter)
         self.assertIn('"dates" (dict "lastmod" $lastmod)', adapter)
@@ -50,6 +58,14 @@ class SiteContractTests(unittest.TestCase):
         self.assertNotIn("simple-box", page)
         self.assertNotIn("simple-mft", page)
 
+    def test_rich_text_links_are_visually_distinct(self):
+        css = (SITE / "assets/css/custom.css").read_text(encoding="utf-8")
+        self.assertIn(".cad-rich-text a {", css)
+        self.assertIn("text-decoration: underline;", css)
+        self.assertIn("text-underline-offset:", css)
+        self.assertIn(".cad-rich-text a:hover", css)
+        self.assertIn(".cad-rich-text a:focus-visible", css)
+
     def test_catalog_layout_restores_recent_and_grouped_navigation(self):
         home = (SITE / "layouts/home.html").read_text(encoding="utf-8")
         catalog = (SITE / "layouts/models/list.html").read_text(encoding="utf-8")
@@ -68,6 +84,44 @@ class SiteContractTests(unittest.TestCase):
         for name in ("Models", "Basic", "Components", "Advanced"):
             self.assertIn(f'name = "{name}"', menu)
         self.assertIn("Updated {{ $page.Lastmod.Format", card)
+
+    def test_owner_first_variant_navigation_contract(self):
+        adapter = (SITE / "content/models/_content.gotmpl").read_text(
+            encoding="utf-8"
+        )
+        catalog = (SITE / "layouts/models/list.html").read_text(
+            encoding="utf-8"
+        )
+        home = (SITE / "layouts/home.html").read_text(encoding="utf-8")
+        page = (SITE / "layouts/models/single.html").read_text(encoding="utf-8")
+        card = (SITE / "layouts/partials/cad/model-card.html").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('"cadOwnerIndex" true', adapter)
+        self.assertIn('"catalogEntry" true', adapter)
+        self.assertIn('"catalogEntry" (not $hasOwnerPage)', adapter)
+        self.assertIn('"ownerVariantIds" $variantIds', adapter)
+        self.assertIn('index $rootMeta "variant_groups"', adapter)
+        self.assertIn('printf "owners/%s" $modelRoot', adapter)
+        self.assertIn('"cadOwnerPath" $ownerPath', adapter)
+        self.assertIn('"cadOwnerTitle" $ownerTitle', adapter)
+        self.assertIn('"cadVariant" true', adapter)
+
+        self.assertIn('"Params.catalogEntry" true', catalog)
+        self.assertIn('"Params.catalogEntry" true', home)
+        self.assertIn(".Params.cadOwnerIndex", page)
+        self.assertIn(".Params.ownerVariantIds", page)
+        self.assertIn(".Params.variantGroups", page)
+        self.assertIn(".Params.cadOwnerPath", page)
+        self.assertIn("Other variants", page)
+        self.assertIn("Physical owner", page)
+        self.assertIn("$page.Params.cadOwnerIndex", card)
+        self.assertIn("$page.Params.ownerVariantIds", card)
+
+        for shared in (adapter, catalog, home, page, card):
+            self.assertNotIn("hub75", shared.lower())
+            self.assertNotIn("guide-rail", shared.lower())
 
     def test_pages_build_passes_durable_scope_to_hugo(self):
         build = (ROOT / "modules/pages/src/cad_model_pages/build.py").read_text(

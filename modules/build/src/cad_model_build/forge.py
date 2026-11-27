@@ -1,7 +1,8 @@
-"""Prepare one exact Forge revision and compile all planned models."""
+"""Prepare one released Forge version and compile all planned models."""
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -10,8 +11,8 @@ import sys
 from .config import ForgePin
 
 
-def install_url(repository: str, commit: str) -> str:
-    return f"git+https://github.com/{repository}.git@{commit}#subdirectory=scpf"
+def install_url(repository: str, version: str) -> str:
+    return f"git+https://github.com/{repository}.git@{version}#subdirectory=cadlib"
 
 
 def build_wheel(pin: ForgePin, wheel_dir: Path) -> Path:
@@ -26,7 +27,7 @@ def build_wheel(pin: ForgePin, wheel_dir: Path) -> Path:
             "--no-deps",
             "--wheel-dir",
             str(wheel_dir),
-            install_url(pin.repository, pin.commit),
+            install_url(pin.repository, pin.version),
         ],
         check=True,
     )
@@ -64,6 +65,110 @@ def tested_solidcraft_version(wheel: Path) -> str:
     return value
 
 
+
+def _drawing_artifacts(document: dict, commands_path: str) -> list[dict]:
+    artifacts = document.get("artifacts", {})
+    if artifacts is None:
+        return []
+    if not isinstance(artifacts, dict):
+        raise RuntimeError("Forge artifacts must be an object")
+    drawings = artifacts.get("drawings", [])
+    if not isinstance(drawings, list):
+        raise RuntimeError("Forge drawing artifacts must be a list")
+
+    base = Path(commands_path).parent
+    projected = []
+    seen: set[str] = set()
+    required = {"name", "drawing", "pdf"}
+    advanced = {"sheet", "png", "inspect"}
+    for index, item in enumerate(drawings):
+        if not isinstance(item, dict) or not required.issubset(item):
+            raise RuntimeError(f"invalid Forge drawing artifact at index {index}")
+        name = item["name"]
+        variable = item["drawing"]
+        pdf = item["pdf"]
+        if not isinstance(pdf, str):
+            raise RuntimeError(f"invalid Forge drawing artifact at index {index}")
+        relative = Path(pdf)
+        if (
+            not isinstance(name, str)
+            or not name.strip()
+            or not isinstance(variable, str)
+            or not variable.startswith("$")
+            or relative.is_absolute()
+            or ".." in relative.parts
+            or relative.suffix.lower() != ".pdf"
+            or not relative.parts
+            or relative.parts[0] != "drawings"
+        ):
+            raise RuntimeError(f"invalid Forge drawing artifact at index {index}")
+
+        row = {
+            "name": name.strip(),
+            "drawing": variable,
+            "path": (base / relative).as_posix(),
+        }
+        artifact_paths = [row["path"]]
+
+        if any(key in item for key in advanced):
+            if not advanced.issubset(item):
+                raise RuntimeError(
+                    f"invalid Forge drawing artifact at index {index}"
+                )
+            sheet = item["sheet"]
+            png = item["png"]
+            inspect = item["inspect"]
+            if (
+                not isinstance(sheet, str)
+                or not sheet.startswith("$")
+                or not isinstance(png, str)
+                or not isinstance(inspect, str)
+            ):
+                raise RuntimeError(
+                    f"invalid Forge drawing artifact at index {index}"
+                )
+            preview = Path(png)
+            inspection = Path(inspect)
+            if (
+                preview.is_absolute()
+                or inspection.is_absolute()
+                or ".." in preview.parts
+                or ".." in inspection.parts
+                or preview.suffix.lower() != ".png"
+                or inspection.suffix.lower() != ".json"
+                or relative.with_suffix(".png") != preview
+                or relative.with_suffix(".json") != inspection
+                or not preview.parts
+                or preview.parts[0] != "drawings"
+                or not inspection.parts
+                or inspection.parts[0] != "drawings"
+            ):
+                raise RuntimeError(
+                    f"invalid Forge drawing artifact at index {index}"
+                )
+            row.update(
+                {
+                    "sheet": sheet,
+                    "preview": (base / preview).as_posix(),
+                    "inspect": (base / inspection).as_posix(),
+                }
+            )
+            artifact_paths.extend((row["preview"], row["inspect"]))
+            orientation = item.get("orientation")
+            if orientation is not None:
+                if not isinstance(orientation, str) or not orientation.startswith("$"):
+                    raise RuntimeError(
+                        f"invalid Forge drawing artifact at index {index}"
+                    )
+                row["orientation"] = orientation
+
+        for path in artifact_paths:
+            if path in seen:
+                raise RuntimeError(f"duplicate Forge drawing artifact: {path}")
+            seen.add(path)
+        projected.append(row)
+    return projected
+
 def compile_plan(*, repo: Path, output_root: Path, plan: dict, wheel: Path) -> None:
     env = dict(os.environ)
     env["PYTHONPATH"] = _pythonpath(wheel)
@@ -87,3 +192,7 @@ def compile_plan(*, repo: Path, output_root: Path, plan: dict, wheel: Path) -> N
         )
         if not target.is_file() or target.stat().st_size == 0:
             raise RuntimeError(f"Forge produced no output: {target}")
+        document = json.loads(target.read_text(encoding="utf-8"))
+        if not isinstance(document, dict):
+            raise RuntimeError(f"Forge produced invalid command document: {target}")
+        row["drawings"] = _drawing_artifacts(document, row["commands"])

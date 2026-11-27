@@ -95,15 +95,30 @@ def resolve_plan(
                         if "stl" in model.artifacts
                         else None,
                     },
+                    "drawings": [],
                     "snapshots": [
                         {
                             "name": item.name,
                             "path": f"{target}/{item.name}",
                             "camera": item.camera,
+                            **(
+                                {"exploded_view": item.exploded_view}
+                                if item.exploded_view is not None
+                                else {}
+                            ),
                         }
                         for item in model.snapshots
                     ],
                     "artifacts": list(model.artifacts),
+                    "artifact_options": (
+                        {
+                            "stl": {
+                                "quality": model.stl_quality,
+                            },
+                        }
+                        if model.stl_quality is not None
+                        else {}
+                    ),
                 }
             )
 
@@ -114,7 +129,6 @@ def resolve_plan(
         "forge": {
             "repository": project.forge.repository,
             "version": project.forge.version,
-            "commit": project.forge.commit,
         },
         "solidcraft": {
             "image": project.solidcraft.image,

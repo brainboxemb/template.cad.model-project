@@ -33,7 +33,11 @@ def _camera_args(camera: dict | None) -> list[str]:
     return ["--camera", json.dumps(camera, separators=(",", ":"))]
 
 
-def _snapshot(saved: Path, target: Path, camera: dict | None) -> None:
+def _render_snapshot(
+    saved: Path,
+    target: Path,
+    camera: dict | None,
+) -> None:
     command = [
         "solidcraft-cli",
         "snapshot",
@@ -49,6 +53,275 @@ def _snapshot(saved: Path, target: Path, camera: dict | None) -> None:
         raise RuntimeError(f"SolidCraft produced no snapshot: {target}")
 
 
+def _snapshot(
+    saved: Path,
+    target: Path,
+    camera: dict | None,
+    exploded_view: str | None = None,
+) -> None:
+    if exploded_view is None:
+        _render_snapshot(saved, target, camera)
+        return
+
+    if not isinstance(exploded_view, str) or not exploded_view.strip():
+        raise RuntimeError("snapshot exploded view must be non-empty text")
+    exploded_view = exploded_view.strip()
+
+    # Presentation-only snapshots use a temporary saved-design checkpoint.
+    # The accepted model.sc remains assembled and is never mutated, so one
+    # exploded snapshot cannot leak presentation state into later outputs.
+    with tempfile.TemporaryDirectory(prefix="snapshot-presentation-") as tmp:
+        work = Path(tmp)
+        script = work / "show-exploded.json"
+        checkpoint = work / "model.sc"
+        script.write_text(
+            json.dumps(
+                {
+                    "commands": [{
+                        "command": "explode.show",
+                        "params": {"view": exploded_view},
+                    }]
+                },
+                indent=2,
+            ) + "\n",
+            encoding="utf-8",
+        )
+        try:
+            subprocess.run(
+                [
+                    "solidcraft-cli",
+                    "run",
+                    str(script),
+                    "--in",
+                    str(saved),
+                    "--save",
+                    str(checkpoint),
+                    "--quiet",
+                ],
+                check=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(
+                f"SolidCraft could not select exploded view {exploded_view!r}"
+            ) from exc
+        if not checkpoint.is_file() or checkpoint.stat().st_size == 0:
+            raise RuntimeError(
+                f"SolidCraft produced no exploded snapshot checkpoint: {checkpoint}"
+            )
+        _render_snapshot(checkpoint, target, camera)
+
+
+
+def _drawing_inspections(replay_results) -> dict[str, dict]:
+    """Return the final native drawing inspection for each named drawing."""
+    by_name: dict[str, dict] = {}
+    if not isinstance(replay_results, list):
+        return by_name
+    for result in replay_results:
+        if (
+            isinstance(result, dict)
+            and isinstance(result.get("name"), str)
+            and isinstance(result.get("sheets"), list)
+            and isinstance(result.get("properties"), dict)
+        ):
+            by_name[result["name"]] = result
+    return by_name
+
+def _export_drawings(
+    *,
+    document: dict,
+    row: dict,
+    variables: dict,
+    saved: Path,
+    output_root: Path,
+    work_dir: Path,
+    replay_results,
+) -> tuple[Path, ...]:
+    declarations = row.get("drawings", [])
+    if not isinstance(declarations, list):
+        raise RuntimeError(f"{row['id']}: drawings must be a list")
+
+    source = document.get("artifacts", {}).get("drawings", [])
+    if not isinstance(source, list):
+        raise RuntimeError(f"{row['id']}: Forge drawing artifacts must be a list")
+    by_variable = {
+        item.get("drawing"): item
+        for item in source
+        if isinstance(item, dict)
+    }
+    inspections = _drawing_inspections(replay_results)
+
+    produced: list[Path] = []
+    seen: set[Path] = set()
+    root = output_root.resolve()
+    for index, item in enumerate(declarations, start=1):
+        if not isinstance(item, dict):
+            raise RuntimeError(f"{row['id']}: invalid drawing declaration")
+        required = {"name", "drawing", "path"}
+        allowed = required | {"sheet", "orientation", "preview", "inspect"}
+        if not required.issubset(item) or not set(item).issubset(allowed):
+            raise RuntimeError(f"{row['id']}: invalid drawing declaration")
+
+        variable = item["drawing"]
+        declared = by_variable.get(variable)
+        if not isinstance(declared, dict):
+            raise RuntimeError(
+                f"{row['id']}: drawing {variable!r} is not declared by Forge"
+            )
+        if variable not in variables:
+            raise RuntimeError(
+                f"{row['id']}: drawing variable {variable!r} was not replay-bound"
+            )
+
+        target = (output_root / item["path"]).resolve()
+        targets = [target]
+        preview = None
+        inspect = None
+        sheet_variable = item.get("sheet")
+        if "preview" in item or "inspect" in item or sheet_variable is not None:
+            if (
+                not isinstance(item.get("preview"), str)
+                or not isinstance(item.get("inspect"), str)
+                or not isinstance(sheet_variable, str)
+                or sheet_variable not in variables
+            ):
+                raise RuntimeError(
+                    f"{row['id']}: incomplete drawing preview declaration"
+                )
+            preview = (output_root / item["preview"]).resolve()
+            inspect = (output_root / item["inspect"]).resolve()
+            targets.extend((preview, inspect))
+
+        for artifact in targets:
+            if root not in artifact.parents:
+                raise RuntimeError(f"{row['id']}: drawing path escapes build scope")
+            if artifact in seen:
+                raise RuntimeError(
+                    f"{row['id']}: duplicate drawing path {artifact}"
+                )
+            seen.add(artifact)
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+
+        orientation_variable = item.get("orientation")
+        if orientation_variable is not None:
+            if (
+                not isinstance(orientation_variable, str)
+                or orientation_variable not in variables
+                or variables[orientation_variable] != "landscape"
+            ):
+                raise RuntimeError(
+                    f"{row['id']}: drawing sheet is not landscape"
+                )
+
+        commands = [
+            {
+                "command": "drawing.open",
+                "params": {"drawing": variables[variable]},
+            },
+            {
+                "command": "drawing.export",
+                "params": {
+                    "format": "pdf",
+                    "path": str(target),
+                },
+            },
+        ]
+        if preview is not None:
+            commands.append(
+                {
+                    "command": "drawing.export",
+                    "params": {
+                        "sheet": variables[sheet_variable],
+                        "format": "png",
+                        "path": str(preview),
+                        "dpi": 144,
+                    },
+                }
+            )
+        commands.append({"command": "drawing.close", "params": {}})
+
+        script = work_dir / f"drawing-export-{index}.json"
+        checkpoint = work_dir / f"drawing-export-{index}.sc"
+        script.write_text(
+            json.dumps({"commands": commands}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            [
+                "solidcraft-cli",
+                "run",
+                str(script),
+                "--in",
+                str(saved),
+                "--save",
+                str(checkpoint),
+                "--quiet",
+            ],
+            check=True,
+        )
+
+        if not target.is_file() or target.stat().st_size == 0:
+            raise RuntimeError(f"{row['id']}: SolidCraft produced no drawing PDF")
+        if target.read_bytes()[:5] != b"%PDF-":
+            raise RuntimeError(f"{row['id']}: drawing artifact is not a PDF")
+        produced.append(target)
+
+        if preview is not None and inspect is not None:
+            if not preview.is_file() or preview.stat().st_size == 0:
+                raise RuntimeError(
+                    f"{row['id']}: SolidCraft produced no drawing preview PNG"
+                )
+            if preview.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+                raise RuntimeError(
+                    f"{row['id']}: drawing preview artifact is not a PNG"
+                )
+            inspection = inspections.get(item["name"])
+            if inspection is None:
+                raise RuntimeError(
+                    f"{row['id']}: replay produced no drawing inspection"
+                )
+            inspect.write_text(
+                json.dumps(inspection, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            produced.extend((preview, inspect))
+
+    return tuple(produced)
+
+def _export_stl(
+    *,
+    saved: Path,
+    target: Path,
+    artifact_options: dict,
+) -> None:
+    """SolidCraft adapter for generic STL artifact intent."""
+    options = artifact_options.get("stl", {})
+    if not isinstance(options, dict) or set(options) - {"quality"}:
+        raise RuntimeError("invalid STL artifact options")
+
+    command = [
+        "solidcraft-cli",
+        "run",
+        "--in",
+        str(saved),
+        "--out",
+        str(target),
+    ]
+
+    # No generic quality means adapter-owned default behavior.  For the current
+    # SolidCraft adapter that is deliberately expressed by omitting --quality,
+    # leaving the pinned runtime to use its native default.
+    quality = options.get("quality")
+    if quality is not None:
+        if not isinstance(quality, str) or not quality:
+            raise RuntimeError("invalid STL quality")
+        command.extend(["--quality", quality])
+
+    subprocess.run(command, check=True)
+    if not target.is_file() or target.stat().st_size == 0:
+        raise RuntimeError(f"SolidCraft produced no STL: {target}")
+
+
 def _build_one(output_root: Path, row: dict) -> None:
     from scpf.headless import run_document
 
@@ -62,11 +335,24 @@ def _build_one(output_root: Path, row: dict) -> None:
     saved.parent.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix=f"scpf-{row['id']}-") as tmp:
-        run_document(
+        work_dir = Path(tmp)
+        results = work_dir / "replay-results.json"
+        replay = run_document(
             document,
             save=saved,
             export=step,
-            work_dir=Path(tmp),
+            results_out=results,
+            work_dir=work_dir,
+        )
+        replay_results = json.loads(results.read_text(encoding="utf-8"))
+        drawings = _export_drawings(
+            document=document,
+            row=row,
+            variables=replay.get("variables", {}),
+            saved=saved,
+            output_root=output_root,
+            work_dir=work_dir,
+            replay_results=replay_results,
         )
 
     _snapshot(
@@ -77,31 +363,21 @@ def _build_one(output_root: Path, row: dict) -> None:
 
     stl_value = native.get("stl")
     if stl_value:
-        stl = output_root / stl_value
-        subprocess.run(
-            [
-                "solidcraft-cli",
-                "run",
-                "--in",
-                str(saved),
-                "--out",
-                str(stl),
-                "--quality",
-                "fine",
-            ],
-            check=True,
+        _export_stl(
+            saved=saved,
+            target=output_root / stl_value,
+            artifact_options=row.get("artifact_options", {}),
         )
-        if not stl.is_file() or stl.stat().st_size == 0:
-            raise RuntimeError(f"SolidCraft produced no STL: {stl}")
 
     for extra in row.get("snapshots", []):
         _snapshot(
             saved,
             output_root / extra["path"],
             extra.get("camera"),
+            extra.get("exploded_view"),
         )
 
-    required = [saved, step, png]
+    required = [saved, step, png, *drawings]
     missing = [
         path for path in required
         if not path.is_file() or path.stat().st_size == 0

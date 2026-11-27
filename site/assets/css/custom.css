@@ -801,6 +801,19 @@ html:not(.dark) .hextra-search-trigger{font-size:.9rem}
   letter-spacing: 0;
 }
 
+.cad-rich-text a {
+  color: var(--cad-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: .16em;
+}
+
+.cad-rich-text a:hover,
+.cad-rich-text a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
 .cad-rich-text p,
 .cad-rich-text li {
   margin-top: .45rem;
@@ -1133,3 +1146,17 @@ html:not(.dark) .hextra-search-trigger{font-size:.9rem}
   .cad-page-shell{width:min(1080px,calc(100% - 28px))!important}
   .cad-model-hero{padding:1.5rem 1.2rem}
 }
+
+
+.cad-drawing{margin-top:1rem}
+.cad-drawing-preview-link{display:block;width:100%;border:1px solid var(--cad-line);border-radius:12px;background:#fff;overflow:hidden}
+.cad-drawing-preview{display:block;width:100%;height:auto;background:#fff}
+
+/* Physical-owner presentation for multi-variant model families. */
+.cad-owner-summary{max-width:78ch}
+.cad-owner-group{margin:1.75rem 0 2.4rem}
+.cad-owner-group .cad-section-heading{margin-bottom:.8rem}
+.cad-owner-link{display:inline-block;text-decoration:none}
+.cad-owner-link:hover{background:#dcecff;text-decoration:none}
+.dark .cad-owner-link:hover{background:#173653}
+

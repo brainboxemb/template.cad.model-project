@@ -1,8 +1,9 @@
 schema: 1
-branch: fix/remove-image-url-contract
+branch: issue/125-main-governance-policy
 
 modules:
-  - pages
+  - merge-policy
+  - branch-cleanup
 models: []
 tasks:
   - test
