@@ -28,6 +28,42 @@ python -m scpf models/advanced/simple_mft_assembly/scpf/model.py --connect --new
 
 No Forge SHA is part of the normal model-project workflow.
 
+## Temporary Forge qualification
+
+A temporary work branch may qualify the real model repository against one
+unreleased Forge commit without changing the released Forge baseline in
+`ci.yml`.
+
+Use an exact immutable commit SHA in a matching root `build.yml`:
+
+```yaml
+schema: 1
+branch: chore/forge-exp-qualification
+
+modules: all
+models: all
+tasks: [test, build]
+
+qualification:
+  forge:
+    ref: 0123456789abcdef0123456789abcdef01234567
+```
+
+The qualification override is accepted only when `build.yml.branch` matches
+the current work branch, and `ref` must be exactly 40 lowercase hexadecimal
+characters. Branch names and tags are deliberately rejected so the evidence
+cannot move underneath a qualification run.
+
+The normal `ci.yml.dependencies.forge.version` remains a released
+`vX.Y.Z` tag. Generated `build-plan.json` records that released baseline
+and adds `forge.qualification_ref` for the exact candidate used by the
+temporary run.
+
+Permanent `dev` and `main` CI ignore work-branch `build.yml`, so a
+qualification ref cannot silently become the normal repository dependency.
+`bootstrap.ps1` also remains release-only; this override exists for CI
+qualification, not normal local development.
+
 ## Branch integration
 
 All source-branch integrations are executed through the repository-local merge
