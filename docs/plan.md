@@ -26,6 +26,9 @@ same released version used by CI.
 - item-local impact/watch metadata;
 - directory-local model build priority;
 - explicit physical-model dependency graph for assembly impact;
+- `process: false` keeps a model owner discoverable and explicitly selectable
+  on a matching work branch while excluding it from automatic/full permanent-lane
+  model selection and automatic dependent expansion;
 - local merge-policy owns all source-branch integration and dispatches target CI;
 - standalone cleanup removes merged temporary branches;
 - direct Forge -> JSON -> one SolidCraft replay batch;

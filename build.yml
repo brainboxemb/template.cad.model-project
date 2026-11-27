@@ -1,8 +1,8 @@
 schema: 1
-branch: fix/118-pages-skip-disabled-models
+branch: issue/120-process-false-explicit-build
 
 modules:
-  - pages
+  - ci
 models: []
 tasks:
   - test
