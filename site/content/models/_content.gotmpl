@@ -53,6 +53,14 @@ Generic model page adapter.
   {{ end }}
   {{ $ci := $ciResource | transform.Unmarshal }}
 
+  {{ $process := true }}
+  {{ if isset $ci "process" }}
+    {{ $process = index $ci "process" }}
+  {{ end }}
+  {{ if not $process }}
+    {{ continue }}
+  {{ end }}
+
   {{ $lastmodRaw := index $historyRoots $modelRoot }}
   {{ if not $lastmodRaw }}
     {{ errorf "missing model history for %s" $modelRoot }}
