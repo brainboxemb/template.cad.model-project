@@ -1,9 +1,9 @@
 schema: 1
-branch: fix/122-remove-runtime-candidate
+branch: issue/125-main-governance-policy
 
 modules:
-  - ci
-  - build
+  - merge-policy
+  - branch-cleanup
 models: []
 tasks:
   - test
