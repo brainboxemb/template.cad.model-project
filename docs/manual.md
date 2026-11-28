@@ -89,6 +89,12 @@ the normal released Forge baseline and, when used, the exact
 `qualification.forge.ref`. This makes `/test/` suitable for visually
 reviewing an unreleased Forge candidate or a CAD work branch before integration.
 
+The rolling test scope may intentionally contain only the models selected by
+the matching work-branch `build.yml`. Pages therefore presents only source
+owners/variants that have durable rows in `build/test/build-plan.json`.
+Permanent `main`, `dev` and `exp` scopes remain strict and still require
+their normal durable build rows.
+
 Ordinary PRs remain verification-only unless they explicitly request
 `output.scope: test`.
 
