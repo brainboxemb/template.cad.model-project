@@ -11,14 +11,15 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
 
 ## Now
 
-- #133 is selected: add permanent `exp` lane plus one rolling `test` output scope requested explicitly from matching work-branch `build.yml`; implement first in the template, then adopt in the real CAD catalog.
+No active work selected.
 
 ## Accepted architecture
 
 - stable `main` owns the canonical repository plan and handoff state;
-- normal product/model/module work starts from `dev`;
+- normal product/model/module work starts from `dev`, with optional permanent
+  `exp` for isolated experiments and explicit `dev <-> exp` checkpoints;
 - work branch selection from matching `build.yml`;
-- incremental `dev` CI from the last successful integration baseline;
+- incremental `dev` and `exp` CI from each lane's last successful integration baseline;
 - full `main` CI;
 - cancel-in-progress;
 - item-local impact/watch metadata;
@@ -34,13 +35,18 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
   integration target;
 - direct Forge -> JSON -> one SolidCraft replay batch;
 - Forge v0.19.0 / SolidCraft 0.49.0 / runtime v0.3.6 baseline;
-- generated `build` branch with `dev/` and `main/` scopes;
+- generated `build` branch with `main/`, `dev/`, `exp/` and one rolling
+  `test/` scope; matching temporary `build.yml` opts into test publication
+  with `output.scope: test` and fully replaces that single review scope;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
 - Pages links durable CAD artifacts from `build` and never republishes them;
-- Pages publishes stable `/` and development `/dev/` presentation as one
-  generated `gh-pages` tree.
+- Pages publishes stable `/`, development `/dev/`, experimental `/exp/`
+  and current rolling review `/test/` as one generated `gh-pages` tree;
+- rolling test evidence retains exact source branch/SHA plus optional Forge
+  qualification SHA, with no per-PR output directories or cleanup lifecycle.
 
 ## Next
 
-- Qualify #133 on the template itself, promote the accepted template contract, then adopt it in `brainboxemb/2026-011-02.cad.solidcraft` before using `/test/` as visual evidence for future Forge/CAD experimental checkpoints.
+No next work selected. Select an open issue deliberately before implementation;
+do not infer work from stale branch-local plan text.
