@@ -9,7 +9,7 @@
       "artifacts": [
         "stl"
       ],
-      "built_source_sha": "d27f35bac5483a9792fe814e9bfb72874f632d29",
+      "built_source_sha": "44b784776b9e5f1ca5f261bce0cd4fc11d0d9e85",
       "commands": "models/simple-box/solidcraft.json",
       "dependencies": [],
       "drawings": [],
@@ -53,5 +53,5 @@
     "version": "0.49.0"
   },
   "source_ref": "main",
-  "source_sha": "d27f35bac5483a9792fe814e9bfb72874f632d29"
+  "source_sha": "44b784776b9e5f1ca5f261bce0cd4fc11d0d9e85"
 }
