@@ -11,13 +11,7 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
 
 ## Now
 
-### #141 — materialize rolling test output over durable dev baseline
-
-Fix the generic rolling `test` publication discovered by the real CAD catalog:
-keep PR builds bounded, but publish one complete review scope by copying the
-current durable `build/dev` scope and overlaying the selected candidate model
-outputs. Preserve candidate source/SHA/toolchain evidence at the test-plan
-level and each baseline model row's own build-source evidence.
+No active work selected.
 
 ## Accepted architecture
 
@@ -43,7 +37,9 @@ level and each baseline model row's own build-source evidence.
 - Forge v0.19.0 / SolidCraft 0.49.0 / runtime v0.3.6 baseline;
 - generated `build` branch with `main/`, `dev/`, `exp/` and one rolling
   `test/` scope; matching temporary `build.yml` opts into test publication
-  with `output.scope: test` and fully replaces that single review scope;
+  with `output.scope: test`; PR execution stays bounded while publication
+  materializes a fresh complete test scope from durable `dev` and overlays
+  the selected candidate model outputs;
 - compact model `ci.yml` with optional primary snapshot camera;
 - physical model owners may expand into multiple build variants;
 - Pages links durable CAD artifacts from `build` and never republishes them;
@@ -54,6 +50,5 @@ level and each baseline model row's own build-source evidence.
 
 ## Next
 
-After #141 is qualified and promoted, sync the exact template fix into
-`brainboxemb/2026-011-02.cad.solidcraft` PR #291 and complete the real
-bounded `simple-box` `/test/` acceptance before merging CAD #285.
+No next work selected. Select an open issue deliberately before implementation;
+do not infer work from stale branch-local plan text.
