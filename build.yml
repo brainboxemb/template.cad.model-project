@@ -1,12 +1,8 @@
 schema: 1
-branch: issue/133-exp-test-output
+branch: issue/141-test-overlay
 
 modules:
-  - ci
   - build
-  - pages
-  - merge-policy
-  - branch-cleanup
 models:
   - simple-box
 tasks:
