@@ -77,8 +77,15 @@ output:
 ```
 
 The request requires the `build` task. A successful PR build writes the
-candidate as namespace `test`, then fully replaces the one durable
-`build/test` scope and rebuilds Pages at `/test/`.
+selected candidate models as namespace `test`. Publication then creates one
+fresh complete `build/test` review scope from the current durable
+`build/dev` catalog and overlays those selected candidate model outputs before
+rebuilding Pages at `/test/`.
+
+This keeps PR execution bounded: unselected active models are reused from the
+durable dev scope instead of being rebuilt merely so the review site can render
+a complete catalog. Candidate models replace their dev artifacts and build-plan
+rows; inactive baseline models are omitted.
 
 There is deliberately only one rolling test output. A later successful test
 publication replaces the earlier one. Nothing is retained under a PR-specific
@@ -444,7 +451,8 @@ main/
 
 Ordinary PR/work-branch builds are verification-only. A PR that explicitly
 requests `output.scope: test` publishes by fully replacing the rolling
-`test/` scope. Incremental `dev` and `exp` publication replace only selected
+`test/` scope with a fresh dev-baseline-plus-candidate materialization.
+Incremental `dev` and `exp` publication replace only selected
 model directories, preserve unselected active models, and remove model
 directories that are no longer active. A full `main` build replaces the
 complete `main/` scope.
