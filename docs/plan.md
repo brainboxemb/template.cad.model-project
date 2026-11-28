@@ -11,7 +11,15 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
 
 ## Now
 
-No active work selected.
+### #142 — allow bounded rolling test Pages projection
+
+The rolling `test` scope may contain only the models selected by a matching
+temporary `build.yml`. Pages must therefore project only source owners and
+variants that have rows in `build/test/build-plan.json`.
+
+Keep `main`, `dev` and `exp` strict: missing durable build rows remain an
+error on permanent scopes. This is a generic template fix discovered by the
+real CAD catalog #285 qualification.
 
 ## Accepted architecture
 
@@ -48,5 +56,5 @@ No active work selected.
 
 ## Next
 
-No next work selected. Select an open issue deliberately before implementation;
-do not infer work from stale branch-local plan text.
+After #142 is accepted, re-run the real multi-model CAD rolling-test
+qualification that exposed the gap.
