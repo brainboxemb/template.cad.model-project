@@ -26,7 +26,7 @@ Do not treat a branch-local copy of `docs/plan.md` as a competing plan.
 
 ## Branch model
 
-Permanent source branches are only `main` and `dev`.
+Permanent source branches are `main`, `dev` and optional permanent `exp`. `test` is never a source branch; it is one rolling generated review-output scope.
 
 Required integration:
 
@@ -68,7 +68,7 @@ After a successful same-repository short-lived PR is merged into its allowed
 target (`dev` for normal work, or `main` for governance-only `docs/*`
 work), its source branch is removed by `modules/branch-cleanup`.
 
-`main` and `dev` are never cleanup candidates.
+`main`, `dev` and `exp` are never cleanup candidates.
 
 The generated `build` branch is not a source branch. It stores generated technical
 output for the permanent source scopes and is never a cleanup candidate.
@@ -98,13 +98,13 @@ The owner remains discoverable and dependency-validated. A matching work-branch
 automatic selection on permanent lanes excludes it, and dependent expansion
 must not automatically re-add it.
 
-### dev
+### dev / exp
 
-Ignore `build.yml`.
+Ignore `build.yml` on both permanent development lanes.
 
-Use the last successful dev **push/workflow_dispatch** CI SHA as baseline and
-the current dev SHA as target. Build/test the changed items in that Git range,
-plus item-declared impact.
+Use the last successful **push/workflow_dispatch** CI SHA for the same lane as
+baseline and the current lane SHA as target. Build/test the changed items in
+that Git range, plus item-declared impact.
 
 A cancelled dev run never advances the successful baseline. If two squash
 merges arrive quickly, the newer run therefore includes changes not completed
@@ -121,19 +121,28 @@ Ignore `build.yml` and run full.
 Successful permanent-branch model builds publish to the generated branch
 configured by `ci.yml.generated.build_branch`.
 
-The generated branch contains complete build scopes:
+The generated branch contains durable permanent scopes plus one rolling test scope:
 
 ```text
+main/
+  build-plan.json
+  models/
 dev/
   build-plan.json
   models/
-main/
+exp/
+  build-plan.json
+  models/
+test/
   build-plan.json
   models/
 ```
 
-PR/work-branch output is verification-only and is never published. Incremental
-`dev` publication replaces only rebuilt model directories and preserves other
+Ordinary PR/work-branch output is verification-only. A matching `build.yml`
+may explicitly request `output.scope: test`; after a successful PR build that
+candidate fully replaces the single `build/test` scope. There are no per-PR
+test directories and no PR-close cleanup lifecycle. Incremental `dev` and
+`exp` publication replace only rebuilt model directories and preserve other
 active model output. `main` is full and replaces its complete scope.
 
 ## Pages
@@ -152,9 +161,11 @@ Shared layouts must not branch on model names. Model-specific content belongs in
 model-owned metadata/resources. Pages never runs Forge or SolidCraft.
 
 Pages runs separately from CAD CI. After successful permanent build
-publication, CI dispatches `pages.yml` and finishes without waiting. That
-workflow rebuilds both the stable root and `/dev/`, then publishes the complete
-tree to `ci.yml.generated.pages_branch` (`gh-pages`).
+publication, CI dispatches `pages.yml` and finishes without waiting. The
+workflow assembles stable `/`, development `/dev/`, optional experimental
+`/exp/`, and the current rolling review `/test/` when its build scope exists,
+then publishes the complete tree to `ci.yml.generated.pages_branch`
+(`gh-pages`).
 
 ## Item impact
 

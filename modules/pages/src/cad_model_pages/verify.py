@@ -75,7 +75,7 @@ def verify(*, repo: Path, site: Path, build_scope: Path) -> None:
         raise PagesVerificationError("build plan contains no models")
 
     namespace = plan.get("namespace")
-    if namespace not in {"main", "dev"}:
+    if namespace not in {"main", "dev", "exp", "test"}:
         raise PagesVerificationError("build plan has invalid namespace")
     repository = _repository_name(repo)
     blob_base = f"https://github.com/{repository}/blob/build/{namespace}/"
