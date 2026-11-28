@@ -138,6 +138,19 @@ class SiteContractTests(unittest.TestCase):
         self.assertIn("Forge qualification", page)
         self.assertIn('index $forge "qualification_ref"', page)
 
+    def test_test_scope_projects_only_entries_with_durable_rows(self):
+        adapter = (SITE / "content/models/_content.gotmpl").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('index $plan "namespace"', adapter)
+        self.assertIn('eq $namespace "test"', adapter)
+        self.assertIn("$visibleEntries := slice", adapter)
+        self.assertIn('where $rows "id" $slug', adapter)
+        self.assertIn("or (not $partialTest) (ne (len $matches) 0)", adapter)
+        self.assertIn("if eq (len $entries) 0", adapter)
+        self.assertIn("{{ continue }}", adapter)
+        self.assertIn("expected exactly one durable build row", adapter)
+
     def test_pages_build_passes_durable_scope_to_hugo(self):
         build = (ROOT / "modules/pages/src/cad_model_pages/build.py").read_text(
             encoding="utf-8"
