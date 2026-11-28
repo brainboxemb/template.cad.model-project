@@ -9,7 +9,7 @@
       "artifacts": [
         "stl"
       ],
-      "built_source_sha": "031ed10d108292da5ea2f7ce3b199c7ab1f36309",
+      "built_source_sha": "b5438787303268c6b1d911bfa25b4c958b067fbd",
       "commands": "models/simple-box/solidcraft.json",
       "dependencies": [],
       "drawings": [],
@@ -53,5 +53,5 @@
     "version": "0.49.0"
   },
   "source_ref": "issue/133-exp-test-output",
-  "source_sha": "031ed10d108292da5ea2f7ce3b199c7ab1f36309"
+  "source_sha": "b5438787303268c6b1d911bfa25b4c958b067fbd"
 }
