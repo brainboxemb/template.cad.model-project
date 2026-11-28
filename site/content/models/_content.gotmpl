@@ -17,6 +17,8 @@ Generic model page adapter.
   {{ errorf "missing durable build/main/build-plan.json" }}
 {{ end }}
 {{ $plan := $planResource | transform.Unmarshal }}
+{{ $namespace := index $plan "namespace" }}
+{{ $partialTest := eq $namespace "test" }}
 {{ $rows := index $plan "models" }}
 {{ if not $rows }}
   {{ errorf "durable build plan contains no model rows" }}
@@ -93,6 +95,23 @@ Generic model page adapter.
       "source" (index $ci "source")
       "model" $rootMeta
     ) }}
+  {{ end }}
+
+  {{ $visibleEntries := slice }}
+  {{ range $entry := $entries }}
+    {{ $slug := index $entry "slug" }}
+    {{ $matches := where $rows "id" $slug }}
+    {{ if eq (len $matches) 1 }}
+      {{ $visibleEntries = $visibleEntries | append $entry }}
+    {{ else }}
+      {{ if or (not $partialTest) (ne (len $matches) 0) }}
+        {{ errorf "%s: expected exactly one durable build row, found %d" $slug (len $matches) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+  {{ $entries = $visibleEntries }}
+  {{ if eq (len $entries) 0 }}
+    {{ continue }}
   {{ end }}
 
   {{ $variantIds := slice }}
