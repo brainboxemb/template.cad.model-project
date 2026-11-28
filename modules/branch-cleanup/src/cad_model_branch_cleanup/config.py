@@ -16,8 +16,8 @@ class CleanupConfigError(ValueError):
 class CleanupConfig:
     stable: str
     development: str
-    experimental: str
     temporary_prefixes: tuple[str, ...]
+    experimental: str = "exp"
 
     @property
     def permanent(self) -> frozenset[str]:
@@ -49,4 +49,9 @@ def load_config(repo: Path) -> CleanupConfig:
         or not all(isinstance(value, str) and value for value in prefixes)
     ):
         raise CleanupConfigError(f"temporary_prefixes must be a non-empty list: {path}")
-    return CleanupConfig(stable, development, experimental, tuple(prefixes))
+    return CleanupConfig(
+        stable,
+        development,
+        tuple(prefixes),
+        experimental=experimental,
+    )
