@@ -44,7 +44,7 @@ def build_models(
     build_module_root: Path,
     namespace: str,
     models: tuple[CadModel, ...],
-    source_ref: str,
+    source_ref: str = "dev",
     forge_ref: str | None = None,
 ) -> None:
     if not models:
