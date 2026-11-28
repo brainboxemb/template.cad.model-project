@@ -9,7 +9,7 @@
       "artifacts": [
         "stl"
       ],
-      "built_source_sha": "ee60e68718ea80e14680ac27cbd53fde2df89f0f",
+      "built_source_sha": "928b10dddabf7c88fb134c901d764df6787f6595",
       "commands": "models/simple-box/solidcraft.json",
       "dependencies": [],
       "drawings": [],
@@ -53,5 +53,5 @@
     "version": "0.49.0"
   },
   "source_ref": "issue/141-test-overlay",
-  "source_sha": "ee60e68718ea80e14680ac27cbd53fde2df89f0f"
+  "source_sha": "928b10dddabf7c88fb134c901d764df6787f6595"
 }
