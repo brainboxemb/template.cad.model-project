@@ -11,7 +11,13 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
 
 ## Now
 
-No active work selected.
+### #141 — materialize rolling test output over durable dev baseline
+
+Fix the generic rolling `test` publication discovered by the real CAD catalog:
+keep PR builds bounded, but publish one complete review scope by copying the
+current durable `build/dev` scope and overlaying the selected candidate model
+outputs. Preserve candidate source/SHA/toolchain evidence at the test-plan
+level and each baseline model row's own build-source evidence.
 
 ## Accepted architecture
 
@@ -48,5 +54,6 @@ No active work selected.
 
 ## Next
 
-No next work selected. Select an open issue deliberately before implementation;
-do not infer work from stale branch-local plan text.
+After #141 is qualified and promoted, sync the exact template fix into
+`brainboxemb/2026-011-02.cad.solidcraft` PR #291 and complete the real
+bounded `simple-box` `/test/` acceptance before merging CAD #285.
