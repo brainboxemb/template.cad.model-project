@@ -123,6 +123,21 @@ class SiteContractTests(unittest.TestCase):
             self.assertNotIn("hub75", shared.lower())
             self.assertNotIn("guide-rail", shared.lower())
 
+    def test_model_page_exposes_source_and_qualification_evidence(self):
+        adapter = (SITE / "content/models/_content.gotmpl").read_text(
+            encoding="utf-8"
+        )
+        page = (SITE / "layouts/models/single.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"ref" (index $plan "source_ref")', adapter)
+        self.assertIn('"sha" (index $plan "source_sha")', adapter)
+        self.assertIn("Source branch", page)
+        self.assertIn("Source SHA", page)
+        self.assertIn("Forge baseline", page)
+        self.assertIn("Forge qualification", page)
+        self.assertIn('index $forge "qualification_ref"', page)
+
     def test_pages_build_passes_durable_scope_to_hugo(self):
         build = (ROOT / "modules/pages/src/cad_model_pages/build.py").read_text(
             encoding="utf-8"
