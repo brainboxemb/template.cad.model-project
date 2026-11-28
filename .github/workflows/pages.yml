@@ -51,14 +51,29 @@ jobs:
           hugo-version: "0.169.0"
           extended: true
 
+      - name: Resolve matching durable Pages scope
+        id: scope
+        run: |
+          scope=main
+          if [ "${{ github.base_ref }}" = "exp" ] || [ "${{ github.head_ref }}" = "exp" ]; then
+            if [ -s prepared-build/exp/build-plan.json ]; then
+              scope=exp
+            else
+              echo "No durable exp scope yet; using dev for initial exp bootstrap verification"
+              scope=dev
+            fi
+          elif [ "${{ github.base_ref }}" = "dev" ] || [ "${{ github.head_ref }}" = "dev" ]; then
+            scope=dev
+          fi
+          echo "scope=$scope" >> "$GITHUB_OUTPUT"
+
       - name: Build and verify Pages
         env:
           PYTHONPATH: modules/pages/src
-          PAGES_SCOPE: ${{ (github.base_ref == 'exp' || github.head_ref == 'exp') && 'exp' || (github.base_ref == 'dev' || github.head_ref == 'dev') && 'dev' || 'main' }}
         run: >-
           python -m cad_model_pages.build
           --source-root .
-          --build-scope prepared-build/$PAGES_SCOPE
+          --build-scope prepared-build/${{ steps.scope.outputs.scope }}
           --destination generated-site
           --base-url "https://brainboxemb.github.io/template.cad.model-project/"
           --source-ref "${{ github.event.pull_request.head.sha }}"
