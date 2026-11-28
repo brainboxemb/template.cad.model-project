@@ -126,14 +126,11 @@ test/
 ```
 
 Ordinary PR/work-branch output is verification-only. A matching `build.yml`
-may explicitly request `output.scope: test`. The PR still builds only its
-selected models; publication creates a fresh complete `build/test` scope from
-the current durable `build/dev` catalog and overlays those candidate model
-outputs. A later successful test publication fully replaces the previous
-rolling test scope. There are no per-PR test directories and no PR-close
-cleanup lifecycle. Incremental `dev` and `exp` publication replace only
-rebuilt model directories and preserve other active model output. `main` is
-full and replaces its complete scope.
+may explicitly request `output.scope: test`; after a successful PR build that
+candidate fully replaces the single `build/test` scope. There are no per-PR
+test directories and no PR-close cleanup lifecycle. Incremental `dev` and
+`exp` publication replace only rebuilt model directories and preserve other
+active model output. `main` is full and replaces its complete scope.
 
 ## Pages
 
