@@ -66,12 +66,12 @@ class ModelConfig:
 class ProjectConfig:
     stable_branch: str
     development_branch: str
-    experimental_branch: str
     build_branch: str
     forge: ForgePin
     solidcraft: SolidCraftPin
     models_root: Path
     output_root: Path
+    experimental_branch: str = "exp"
 
 
 def _mapping(path: Path) -> dict[str, Any]:
