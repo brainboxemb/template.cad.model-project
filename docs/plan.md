@@ -11,7 +11,7 @@ create a `main -> dev` sync merely to copy plan/handoff metadata.
 
 ## Now
 
-No active work selected.
+- #133 is selected: add permanent `exp` lane plus one rolling `test` output scope requested explicitly from matching work-branch `build.yml`; implement first in the template, then adopt in the real CAD catalog.
 
 ## Accepted architecture
 
@@ -43,5 +43,4 @@ No active work selected.
 
 ## Next
 
-No next work selected. Select an open issue deliberately before implementation;
-do not infer work from stale branch-local plan text.
+- Qualify #133 on the template itself, promote the accepted template contract, then adopt it in `brainboxemb/2026-011-02.cad.solidcraft` before using `/test/` as visual evidence for future Forge/CAD experimental checkpoints.
