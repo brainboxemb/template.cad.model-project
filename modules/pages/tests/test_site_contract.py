@@ -129,7 +129,7 @@ class SiteContractTests(unittest.TestCase):
         )
         self.assertIn('env["HUGO_PARAMS_BUILDSCOPE"] = build_namespace', build)
 
-    def test_pages_workflow_builds_main_and_dev_scopes(self):
+    def test_pages_workflow_builds_main_dev_exp_and_test_scopes(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
@@ -137,10 +137,25 @@ class SiteContractTests(unittest.TestCase):
         self.assertIn("--destination generated-site", workflow)
         self.assertIn("--build-scope prepared-build/dev", workflow)
         self.assertIn("--destination generated-site/dev", workflow)
+        self.assertIn("--build-scope prepared-build/exp", workflow)
+        self.assertIn("--destination generated-site/exp", workflow)
+        self.assertIn("--build-scope prepared-build/test", workflow)
+        self.assertIn("--destination generated-site/test", workflow)
         self.assertIn(
             'https://brainboxemb.github.io/template.cad.model-project/dev/',
             workflow,
         )
+        self.assertIn(
+            'https://brainboxemb.github.io/template.cad.model-project/exp/',
+            workflow,
+        )
+        self.assertIn(
+            'https://brainboxemb.github.io/template.cad.model-project/test/',
+            workflow,
+        )
+        self.assertIn("prepared-build/test/build-plan.json", workflow)
+        self.assertIn('plan.get("source_sha")', workflow)
+        self.assertIn('plan.get("source_ref")', workflow)
         self.assertNotIn("simple-box", workflow)
         self.assertNotIn("simple-mft", workflow)
         self.assertIn("fetch-depth: 0", workflow)
@@ -149,6 +164,7 @@ class SiteContractTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text(
             encoding="utf-8"
         )
+        self.assertIn("github.base_ref == 'exp' || github.head_ref == 'exp'", workflow)
         self.assertIn("github.base_ref == 'dev' || github.head_ref == 'dev'", workflow)
         self.assertIn("--build-scope prepared-build/$PAGES_SCOPE", workflow)
         self.assertNotIn('"models/**/model.yml"', workflow)
