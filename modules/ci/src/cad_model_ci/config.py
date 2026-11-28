@@ -32,11 +32,11 @@ class ForgeDependency:
 class ProjectConfig:
     stable_branch: str
     development_branch: str
-    experimental_branch: str
     forge: ForgeDependency
     modules_root: Path
     models_root: Path
     output_root: Path
+    experimental_branch: str = "exp"
 
 
 @dataclass(frozen=True)
