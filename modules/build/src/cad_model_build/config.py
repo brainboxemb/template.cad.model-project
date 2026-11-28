@@ -66,6 +66,7 @@ class ModelConfig:
 class ProjectConfig:
     stable_branch: str
     development_branch: str
+    experimental_branch: str
     build_branch: str
     forge: ForgePin
     solidcraft: SolidCraftPin
@@ -380,7 +381,11 @@ def load_project(repo: Path) -> ProjectConfig:
 
     stable = branches.get("stable")
     development = branches.get("development")
-    if not isinstance(stable, str) or not isinstance(development, str):
+    experimental = branches.get("experimental")
+    if not all(
+        isinstance(value, str)
+        for value in (stable, development, experimental)
+    ):
         raise BuildConfigError(f"branch names must be strings: {path}")
     build_branch = generated.get("build_branch")
     if not isinstance(build_branch, str) or not _ID.fullmatch(build_branch):
@@ -413,6 +418,7 @@ def load_project(repo: Path) -> ProjectConfig:
     return ProjectConfig(
         stable_branch=stable,
         development_branch=development,
+        experimental_branch=experimental,
         build_branch=build_branch,
         forge=ForgePin(repository, version),
         solidcraft=SolidCraftPin(image, solidcraft_version),
