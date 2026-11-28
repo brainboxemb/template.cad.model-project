@@ -1,9 +1,17 @@
 schema: 1
-branch: issue/130-forge-qualification-ref
+branch: issue/133-exp-test-output
 
 modules:
   - ci
   - build
-models: []
+  - pages
+  - merge-policy
+  - branch-cleanup
+models:
+  - simple-box
 tasks:
   - test
+  - build
+
+output:
+  scope: test

@@ -2,8 +2,8 @@
 
 ## Stable configuration
 
-Root `ci.yml` defines permanent source branches, the generated build branch,
-Forge/SolidCraft versions and repository roots. Forge is selected by its
+Root `ci.yml` defines permanent source branches (`main`, `dev`, `exp`),
+the generated build branch, Forge/SolidCraft versions and repository roots. Forge is selected by its
 released Git tag, for example `version: v0.15.0`. Local bootstrap and CI use
 that same release version.
 
@@ -64,6 +64,45 @@ qualification ref cannot silently become the normal repository dependency.
 `bootstrap.ps1` also remains release-only; this override exists for CI
 qualification, not normal local development.
 
+## Rolling test output
+
+A temporary work branch can make its generated CAD result reviewable without
+creating a permanent source branch or a per-PR output directory.
+
+Add this to the matching root `build.yml`:
+
+```yaml
+output:
+  scope: test
+```
+
+The request requires the `build` task. A successful PR build writes the
+candidate as namespace `test`, then fully replaces the one durable
+`build/test` scope and rebuilds Pages at `/test/`.
+
+There is deliberately only one rolling test output. A later successful test
+publication replaces the earlier one. Nothing is retained under a PR-specific
+directory, so no PR-close cleanup process exists.
+
+The test `build-plan.json` records the exact source branch and source SHA plus
+the normal released Forge baseline and, when used, the exact
+`qualification.forge.ref`. This makes `/test/` suitable for visually
+reviewing an unreleased Forge candidate or a CAD work branch before integration.
+
+Ordinary PRs remain verification-only unless they explicitly request
+`output.scope: test`.
+
+## Experimental lane
+
+`exp` is a permanent source lane, not a test-output alias. It has its own
+`build/exp` generated scope and Pages presentation at `/exp/`.
+
+Normal work branches may target `exp` for isolated experimental development.
+Permanent `dev -> exp` synchronization and `exp -> dev` integration use merge
+commits through the repository-local merge policy. `exp -> main` is not an
+allowed route; accepted experimental work returns through `dev` before any
+stable `dev -> main` promotion.
+
 ## Branch integration
 
 All source-branch integrations are executed through the repository-local merge
@@ -87,9 +126,11 @@ is still rejected.
 
 The merge-policy owns:
 
-- short-lived branch -> `dev`: squash;
+- short-lived branch -> `dev` or `exp`: squash;
+- `dev` <-> `exp`: merge commit;
 - `dev` -> `main`: merge commit;
-- exceptional `main` -> `dev`: merge commit.
+- exceptional `main` -> `dev`: merge commit;
+- `exp` -> `main`: rejected.
 
 Promote accepted development with a merge-commit PR from `dev` to `main`.
 
@@ -121,12 +162,12 @@ tasks:
 If the branch field does not match the actual work branch, the file is ignored
 and CI falls back to full.
 
-### dev
+### dev / exp
 
-`build.yml` is ignored.
+`build.yml` is ignored on both permanent lanes.
 
-CI finds the most recent successful push/workflow_dispatch run on `dev` and
-uses its SHA as the baseline. The current `dev` SHA is the target.
+CI finds the most recent successful push/workflow_dispatch run on the same lane
+and uses its SHA as the baseline. The current lane SHA is the target.
 
 ```text
 git diff --name-only <successful-baseline> <current-dev>
@@ -375,10 +416,16 @@ During a run, generated output is written below the checkout:
 
 ```text
 build/
+  main/
+    build-plan.json
+    models/
   dev/
     build-plan.json
     models/
-  main/
+  exp/
+    build-plan.json
+    models/
+  test/
     build-plan.json
     models/
 ```
@@ -395,10 +442,12 @@ main/
   models/
 ```
 
-PR/work-branch builds are verification-only and never publish. Incremental
-`dev` publication replaces only selected model directories, preserves
-unselected active models, and removes model directories that are no longer
-active. A full `main` build replaces the complete `main/` scope.
+Ordinary PR/work-branch builds are verification-only. A PR that explicitly
+requests `output.scope: test` publishes by fully replacing the rolling
+`test/` scope. Incremental `dev` and `exp` publication replace only selected
+model directories, preserve unselected active models, and remove model
+directories that are no longer active. A full `main` build replaces the
+complete `main/` scope.
 
 Publication uses normal non-force pushes and checks that the source branch still
 points at the source SHA being published.
@@ -419,18 +468,22 @@ rebuilding CAD. Generated CAD artifacts remain owned exclusively by the
 generated `build` branch; Pages never republishes those files into
 `gh-pages`.
 
-One Pages deployment contains both presentation scopes:
+One Pages deployment contains the permanent presentations plus the current
+rolling review when present:
 
 ```text
-/       <- main source + build/main
-/dev/   <- dev source  + build/dev
+/        <- main source + build/main
+/dev/    <- dev source  + build/dev
+/exp/    <- exp source   + build/exp
+/test/   <- exact source SHA recorded by build/test + build/test
 ```
 
 Both scopes use the same Hugo/Hextra layouts. Each scope is verified against
 its matching build plan before the combined generated site is published.
 
 `model.yml` owns presentation text. `ci.yml` owns source/variant identity.
-The generated `build/main` / `build/dev` scopes own JSON, SC, STEP, PNG,
+The generated `build/main` / `build/dev` / `build/exp` / `build/test`
+scopes own JSON, SC, STEP, PNG,
 optional STL, model-owned snapshot images and native drawing PDFs declared by Forge.
 
 Model pages link directly to those durable artifacts:
